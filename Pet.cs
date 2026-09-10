@@ -9,7 +9,6 @@ internal interface IPet
 {
     string Name { get; }
     Size Size { get; }
-    GraphicsPath Silhouette();
     void Paint(Graphics graphics, Mood mood, double seconds, int facing);
 }
 
@@ -17,22 +16,6 @@ internal sealed class CactusPet : IPet
 {
     public string Name => "Cacti";
     public Size Size => new(76, 92);
-
-    public GraphicsPath Silhouette()
-    {
-        var path = new GraphicsPath(FillMode.Winding);
-        path.AddRoundedRectangle(new RectangleF(24, 9, 29, 58), new SizeF(14, 14));
-        path.AddRoundedRectangle(new RectangleF(10, 30, 12, 29), new SizeF(6, 6));
-        path.AddRectangle(new RectangleF(16, 48, 16, 11));
-        path.AddRoundedRectangle(new RectangleF(57, 22, 11, 30), new SizeF(5, 5));
-        path.AddRectangle(new RectangleF(48, 41, 14, 11));
-        path.AddEllipse(39, 4, 15, 13);
-        path.AddRectangle(new RectangleF(20, 62, 37, 9));
-        path.AddPolygon([new(23, 69), new(54, 69), new(49, 87), new(28, 87)]);
-        path.AddEllipse(26, 84, 12, 7);
-        path.AddEllipse(41, 84, 12, 7);
-        return path;
-    }
 
     public void Paint(Graphics g, Mood mood, double seconds, int facing)
     {
@@ -93,3 +76,4 @@ internal sealed class CactusPet : IPet
         if (mood == Mood.React) g.DrawArc(detail, 35, 73, 10, 8, 0, 180);
     }
 }
+

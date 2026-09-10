@@ -12,7 +12,7 @@ The user already has a pet inside VS Code. This companion complements it specifi
 - Cacti stays available on the active Windows workspace when the user switches among workspaces. Only visible windows on that workspace occupy his playground; fully invisible overlays do not.
 - Window sides are solid obstacles; accessible top edges are platforms. The pet can bump into a side, turn around, fall onto a top edge, and walk along it while its body remains outside the window.
 - The pet quietly alternates between walking, idling, looking around, sitting, and sleeping. A few simple rituals give it personality without demanding attention.
-- Clicking the pet produces a brief reaction. Dragging picks it up; releasing drops it with gravity until it lands on a valid surface. A modest flick/throw is optional if easy to implement reliably.
+- Clicking the pet produces a brief reaction. Dragging picks it up; releasing drops it with gravity until it lands on a valid surface. A modest flick throws him; airborne side collisions bounce with reduced speed. A midair click gives a bounded upward bump while preserving sideways momentum, allowing playful catches and repeated taps without adding scores or rewards.
 - If a supporting window moves, closes, or minimizes, the pet falls or is safely repositioned. If a window moves over it, resolve the overlap without drawing it over application content.
 - When no space can contain the pet, it quietly hides and returns when space becomes available. It does not force windows to move or shrink itself to fit every gap.
 
@@ -29,3 +29,4 @@ No progression, feeding obligations, currencies, achievements, streaks, quests, 
 ## Success criterion
 
 During a normal work session outside VS Code, the pet provides occasional amusement without creating a new task or interrupting work. It stays out of application interiors, reacts to clicks, can be picked up and dropped, lands reliably, and leaves ordinary mouse and keyboard interaction unaffected. Maximized windows and unavailable desktop space cause it to disappear quietly rather than violate these boundaries.
+

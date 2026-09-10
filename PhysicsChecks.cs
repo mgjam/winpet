@@ -6,6 +6,13 @@ internal static class PhysicsChecks
     {
         var results = new List<string>();
         void Check(bool condition, string name) { results.Add($"{(condition ? "PASS" : "FAIL")} {name}"); }
+        using (var transparentFrame = PetRenderer.Frame(new CactusPet(), Mood.Idle, 2, 1))
+        {
+            Check(transparentFrame.GetPixel(38, 9).A == 0, "No green background above cactus outline");
+            Check(transparentFrame.GetPixel(0, 0).A == 0, "Empty pixels remain transparent for click-through");
+            Check(transparentFrame.GetPixel(38, 30).A == 255, "Cactus body remains opaque");
+            transparentFrame.Save(Path.Combine(AppContext.BaseDirectory, "clean-edges.png"));
+        }
         Check(Native.IsFullyTransparent(true, 0, 2), "Invisible alpha-zero NVIDIA-style overlay is excluded");
         Check(!Native.IsFullyTransparent(true, 255, 2), "Opaque layered app remains an obstacle");
         Check(!Native.IsFullyTransparent(true, 128, 2), "Partly transparent app remains an obstacle");
@@ -26,6 +33,31 @@ internal static class PhysicsChecks
         Check(hitUnderside && Math.Abs(underside.Y - 450) < .01, "Window underside blocks upward throws");
         Check(world.Supported(landing, size), "Window top supplies stable support");
         var empty = new World(world.Areas, []);
+        float throwX = 600, throwY = 100;
+        var rebound = PetMotion.Move(empty, new(770, 100), size, ref throwX, ref throwY, .035f, true, out bool bounced);
+        Check(bounced && throwX < 0 && Math.Abs(throwX) < 600 && throwY == 100 && empty.Fits(rebound, size), "Right screen bounce reverses and softens horizontal velocity");
+        throwX = -600; throwY = -100;
+        rebound = PetMotion.Move(empty, new(2, 100), size, ref throwX, ref throwY, .035f, true, out bounced);
+        Check(bounced && throwX > 0 && throwY == -100 && empty.Fits(rebound, size), "Left screen bounce preserves upward motion");
+        throwX = 500; throwY = 100;
+        rebound = PetMotion.Move(world, new(175, 300), size, ref throwX, ref throwY, .035f, true, out bounced);
+        Check(bounced && throwX < 0 && world.Fits(rebound, size), "Thrown pet rebounds off a window side without entering it");
+        throwX = -500; throwY = 100;
+        rebound = PetMotion.Move(world, new(505, 300), size, ref throwX, ref throwY, .035f, true, out bounced);
+        Check(bounced && throwX > 0 && world.Fits(rebound, size), "Thrown pet rebounds off the opposite window side");
+        throwX = 25; throwY = 0;
+        PetMotion.Move(empty, new(780, 570), size, ref throwX, ref throwY, .035f, false, out bounced);
+        Check(bounced && throwX == 0 && throwY == 0, "Walking into a side still stops instead of bouncing");
+        throwX = 50; throwY = 800;
+        rebound = PetMotion.Move(world, new(250, 210), size, ref throwX, ref throwY, .035f, true, out _);
+        Check(throwY == 0 && world.Supported(rebound, size), "Thrown pet still lands on window tops");
+        var bump = PetMotion.Bump(new(240, 800));
+        Check(bump.X == 240 && bump.Y < 0, "Midair tap reverses a fast fall and preserves sideways momentum");
+        var repeatedBump = PetMotion.Bump(bump);
+        Check(repeatedBump == bump, "Repeated taps do not stack unlimited upward speed");
+        throwX = bump.X; throwY = bump.Y;
+        rebound = PetMotion.Move(empty, new(100, 2), size, ref throwX, ref throwY, .035f, true, out _);
+        Check(throwY == 0 && empty.Fits(rebound, size), "Bumped pet cannot escape through the top screen edge");
         Check(!empty.Supported(landing, size), "Closing supporting window resumes gravity");
         var covered = new World(world.Areas, [new(0, 0, 800, 600)]);
         Check(covered.FindSpace(new(200, 200), size) == null, "Fully covered desktop hides pet");

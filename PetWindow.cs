@@ -19,6 +19,8 @@ internal sealed class PetWindow : Form
     private Point pressCursor, lastCursor;
     private PointF grabOffset;
     private double lastDragTime;
+    private PointF velocityBeforePress;
+    private double airReactionUntil;
 
     public PetWindow(IPet pet)
     {
@@ -34,9 +36,6 @@ internal sealed class PetWindow : Form
         ShowInTaskbar = false;
         TopMost = true;
         StartPosition = FormStartPosition.Manual;
-        DoubleBuffered = true;
-        BackColor = Color.FromArgb(105, 170, 107);
-        using (var shape = pet.Silhouette()) Region = new Region(shape);
         var area = Screen.PrimaryScreen!.WorkingArea;
         position = new PointF(area.Right - pet.Size.Width - 32, area.Bottom - pet.Size.Height);
         Location = Point.Round(position);
@@ -56,7 +55,7 @@ internal sealed class PetWindow : Form
     protected override bool ShowWithoutActivation => true;
     protected override CreateParams CreateParams
     {
-        get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x00000080; return p; }
+        get { var p = base.CreateParams; p.ExStyle |= 0x08000000 | 0x00000080 | 0x00080000; return p; }
     }
 
     protected override void WndProc(ref Message message)
@@ -103,6 +102,7 @@ internal sealed class PetWindow : Form
     {
         timer.Stop();
         RefreshWorld();
+        await Task.Delay(100);
         Guid origin = VirtualDesktops.DesktopOf(Handle);
         Guid other = Guid.Empty;
         Native.EnumWindows((window, _) =>
@@ -112,6 +112,12 @@ internal sealed class PetWindow : Form
             return other == Guid.Empty;
         }, 0);
         var lines = new List<string> { $"Window has workspace ID: {origin != Guid.Empty}", $"Initial current workspace: {VirtualDesktops.IsCurrent(Handle)}", $"Initial visible: {Visible}", $"Initial valid space: {available}" };
+        if (available)
+        {
+            var corner = new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y));
+            lines.Add($"Transparent corner passes native hit testing: {Native.WindowFromPoint(corner) != Handle}");
+            lines.Add($"Cacti body receives native hit testing: {Native.WindowFromPoint(new Point(corner.X + 38, corner.Y + 30)) == Handle}");
+        }
         if (origin == Guid.Empty)
         {
             lines.Add("Tool window is not assigned to an individual workspace; explicit move test is inapplicable.");
@@ -158,7 +164,8 @@ internal sealed class PetWindow : Form
         else if (!paused)
         {
             bool grounded = world.Supported(position, pet.Size);
-            if (!grounded || vy < 0)
+            bool airborne = !grounded || vy < 0;
+            if (airborne)
             {
                 mood = Mood.Falling;
                 vy = Math.Min(900, vy + 1100 * dt);
@@ -175,17 +182,23 @@ internal sealed class PetWindow : Form
                 }
                 vx = mood == Mood.Walk ? facing * 25 : 0;
             }
-            position = world.Move(position, pet.Size, vx * dt, vy * dt, out bool wall, out bool floor);
-            if (wall) { facing = -facing; vx = 0; }
-            if (floor) vy = 0;
+            position = PetMotion.Move(world, position, pet.Size, ref vx, ref vy, dt, airborne, out bool wall);
+            if (wall) facing = vx != 0 ? Math.Sign(vx) : -facing;
         }
         Place();
-        Invalidate();
     }
 
-    private void Place() => Native.SetWindowPos(Handle, -1, (int)Math.Floor(position.X), (int)Math.Floor(position.Y), pet.Size.Width, pet.Size.Height, 0x10);
+    private void Place()
+    {
+        double now = clock.Elapsed.TotalSeconds;
+        var visibleMood = mood == Mood.Falling && now < airReactionUntil ? Mood.React : mood;
+        PetRenderer.Draw(Handle, pet, visibleMood, now, facing,
+            new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)));
+        Native.SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x13); // Keep topmost without activating or changing bounds.
+    }
 
-    protected override void OnPaint(PaintEventArgs e) => pet.Paint(e.Graphics, mood, clock.Elapsed.TotalSeconds, facing);
+    protected override void OnPaint(PaintEventArgs e) { } // UpdateLayeredWindow supplies the whole frame.
+    protected override void OnPaintBackground(PaintEventArgs e) { }
 
     protected override void OnMouseDown(MouseEventArgs e)
     {
@@ -195,6 +208,7 @@ internal sealed class PetWindow : Form
         pressCursor = lastCursor = Cursor.Position;
         grabOffset = new PointF(pressCursor.X - position.X, pressCursor.Y - position.Y);
         lastDragTime = clock.Elapsed.TotalSeconds;
+        velocityBeforePress = new PointF(vx, vy);
         vx = vy = 0;
         Capture = true;
     }
@@ -205,6 +219,14 @@ internal sealed class PetWindow : Form
         if (e.Button != MouseButtons.Left || !pressed) return;
         pressed = false;
         if (dragging) { mood = Mood.Falling; if (clock.Elapsed.TotalSeconds - lastDragTime > .1) vx = vy = 0; }
+        else if (!paused && (!world.Supported(position, pet.Size) || velocityBeforePress.Y < 0))
+        {
+            // A tap keeps sideways momentum; a drag still catches and throws normally.
+            var bumped = PetMotion.Bump(velocityBeforePress);
+            vx = bumped.X; vy = bumped.Y;
+            mood = Mood.Falling;
+            airReactionUntil = clock.Elapsed.TotalSeconds + 0.4;
+        }
         else { mood = Mood.React; nextBehavior = clock.Elapsed.TotalSeconds + 1.8; vx = vy = 0; }
         dragging = false;
         Capture = false;

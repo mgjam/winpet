@@ -1,6 +1,6 @@
 # Windows Desktop Pet — Architecture Proposal
 
-Prototype note: the initial implementation uses .NET 10 and a pet-sized Windows Forms window with a native silhouette region and no-activation styles. This keeps rendering and input geometry together without a desktop-sized overlay. `IPet` separates cactus artwork from shared motion. The remaining sections describe the original proposal; see README for current limitations.
+Prototype note: the initial implementation uses .NET 10 and a pet-sized Windows Forms window with per-pixel alpha rendering and no-activation styles. This keeps rendering and input geometry together without a desktop-sized overlay. `IPet` separates cactus artwork from shared motion. The remaining sections describe the original proposal; see README for current limitations.
 
 Workspace handling uses the public [IVirtualDesktopManager API](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ivirtualdesktopmanager) to reject windows on inactive workspaces. Cacti's unowned tool window can remain unassigned to a particular workspace; if Windows does assign it and it becomes inactive, move only that window to the active workspace or recreate its handle when no current app can supply a workspace ID. Never switch the user's workspace. Ignore layered windows whose global alpha is explicitly zero; keep ordinary and partly transparent apps solid.
 
@@ -47,3 +47,4 @@ Suggested responsibilities: overlay/input, window geometry, pet motion/behavior,
 First prove a placeholder pet can coexist with other apps without intercepting their input. Then add obstacles and gravity, dragging and reactions, and finally simple rituals/animation.
 
 Manually verify click-through and focus behavior across different apps; side collisions and top-edge landing; fast drops; dragging across occupied space; moving/resizing/removing support; maximized/fullscreen coverage; taskbars; and mixed-DPI monitors. Add focused automated tests for geometry and landing where useful. Record prototype limitations rather than growing v1 to solve every shell edge case.
+

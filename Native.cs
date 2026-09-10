@@ -18,6 +18,7 @@ internal static class Native
     [DllImport("user32.dll")] internal static extern bool SetWindowPos(nint window, nint after, int x, int y, int width, int height, uint flags);
     [DllImport("user32.dll")] internal static extern uint GetWindowThreadProcessId(nint window, out uint process);
     [DllImport("user32.dll")] internal static extern bool GetLayeredWindowAttributes(nint window, out uint color, out byte alpha, out uint flags);
+    [DllImport("user32.dll")] internal static extern nint WindowFromPoint(Point point);
 
     internal static bool IsFullyTransparent(bool hasAttributes, byte alpha, uint flags) => hasAttributes && (flags & 2) != 0 && alpha == 0;
     internal static bool IsPhysicalObstacle(int cloaked, bool? current, bool transparent) => cloaked == 0 && current != false && !transparent;

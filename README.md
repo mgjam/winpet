@@ -21,7 +21,7 @@ dotnet run
 
 Or open `bin\Debug\net10.0-windows\WinPet.exe` after building. A second launch does not create a duplicate pet. Nothing is installed or added to startup.
 
-Click the cactus for a reaction. Hold the left mouse button and drag to pick it up; release to drop or gently throw it. Windows block dragging as well as autonomous movement. Right-click the WinPet system-tray icon (possibly under the hidden-icons arrow) to pause/resume or quit.
+Click the cactus for a reaction. Hold the left mouse button and drag to pick it up; release to drop or gently throw it. Airborne throws bounce softly off the left/right sides of windows and screen edges. Click Cacti in midair to bump him upward while keeping his sideways momentum; timed taps can keep him aloft. Holding and dragging still catches him, and grounded clicks keep the blush reaction. Windows block dragging as well as autonomous movement. Right-click the WinPet system-tray icon (possibly under the hidden-icons arrow) to pause/resume or quit.
 
 Cacti follows the active Windows workspace and uses only its visible application windows as obstacles. Fully invisible overlays (such as NVIDIA's idle overlay) are ignored. Cacti hides only if application windows cover all usable desktop space. Restore or resize a window to expose space, and he returns automatically. He can stand above a window only if his whole body fits there.
 
@@ -31,4 +31,6 @@ Cacti follows the active Windows workspace and uses only its visible application
 
 `dotnet run -- --workspace-check` checks a temporary pet window's workspace assignment. When Windows leaves the tool window unassigned to an individual workspace, it reports that fact; it cannot substitute for checking real workspace switches.
 
-The prototype uses a native shaped Windows Forms window instead of WPF. Empty space outside its silhouette has no window to intercept input. The pet has a fixed 76 × 92 physical-pixel footprint, including on mixed-DPI displays; automatic travel across monitor seams is deferred. Window geometry refreshes every 80 ms, so a rapidly moving window can briefly overlap the pet before correction. Transparent/shaped app windows are treated conservatively as solid rectangles. Auto-hidden taskbars follow Windows' reported work area. Real multi-monitor, fullscreen, and cross-app interaction still need hands-on validation.
+The prototype uses a Windows Forms layered window instead of WPF. The artwork supplies per-pixel transparency for smooth edges; fully transparent pixels pass mouse input through to the desktop. The pet has a fixed 76 × 92 physical-pixel footprint, including on mixed-DPI displays; automatic travel across monitor seams is deferred. Window geometry refreshes every 80 ms, so a rapidly moving window can briefly overlap the pet before correction. Transparent/shaped app windows are treated conservatively as solid rectangles. Auto-hidden taskbars follow Windows' reported work area. Real multi-monitor, fullscreen, and cross-app interaction still need hands-on validation.
+
+
