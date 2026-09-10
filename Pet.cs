@@ -9,15 +9,17 @@ internal interface IPet
 {
     string Name { get; }
     Size Size { get; }
-    void Paint(Graphics graphics, Mood mood, double seconds, int facing);
+    PointF GazeOrigin => new(Size.Width / 2f, Size.Height / 2f);
+    void Paint(Graphics graphics, Mood mood, double seconds, int facing, PetGaze gaze = default);
 }
 
 internal sealed class CactusPet : IPet
 {
     public string Name => "Cacti";
     public Size Size => new(76, 92);
+    public PointF GazeOrigin => new(38, 43);
 
-    public void Paint(Graphics g, Mood mood, double seconds, int facing)
+    public void Paint(Graphics g, Mood mood, double seconds, int facing, PetGaze gaze = default)
     {
         g.SmoothingMode = SmoothingMode.AntiAlias;
         using var outline = new Pen(Color.FromArgb(36, 70, 53), 2);
@@ -51,8 +53,10 @@ internal sealed class CactusPet : IPet
         g.FillEllipse(pink, 46, 5, 7, 7);
         g.FillEllipse(pink, 43, 9, 7, 7);
         g.FillEllipse(Brushes.Wheat, 44, 8, 4, 4);
-        float gaze = mood == Mood.Look ? (float)Math.Sin(seconds * 1.4) * 2 : facing * 0.7f;
-        bool closed = mood is Mood.Sleep or Mood.Sit || seconds % 6.3 < 0.16;
+        float usualLook = mood == Mood.Look ? (float)Math.Sin(seconds * 1.4) * 2 : facing * 0.7f;
+        float eyeX = usualLook * (1 - gaze.Attention) + gaze.X * 2.5f * gaze.Attention;
+        float eyeY = gaze.Y * 2 * gaze.Attention;
+        bool closed = mood == Mood.Sleep || (mood == Mood.Sit && gaze.Attention < 0.1f) || seconds % 6.3 < 0.16;
         if (closed)
         {
             g.DrawArc(outline, 30, 42, 6, 3, 0, 170);
@@ -60,8 +64,8 @@ internal sealed class CactusPet : IPet
         }
         else
         {
-            g.FillEllipse(dark, 32 + gaze, 41, 3, mood == Mood.Dragged ? 6 : 4);
-            g.FillEllipse(dark, 43 + gaze, 41, 3, mood == Mood.Dragged ? 6 : 4);
+            g.FillEllipse(dark, 32 + eyeX, 41 + eyeY, 3, mood == Mood.Dragged ? 6 : 4);
+            g.FillEllipse(dark, 43 + eyeX, 41 + eyeY, 3, mood == Mood.Dragged ? 6 : 4);
         }
         if (mood is Mood.React or Mood.Dragged) {
             g.FillEllipse(pink, 28, 47, 6, 3); g.FillEllipse(pink, 46, 47, 5, 3);

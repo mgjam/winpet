@@ -27,10 +27,15 @@ Cacti follows the active Windows workspace and uses only its visible application
 
 ## Checks and prototype limits
 
+Cacti notices the cursor within about 240 physical pixels of his face and gently looks toward it in any direction. He returns to his usual gaze when it moves away, keeps blinking, and stays asleep if resting in the sleep state. Cursor awareness is shared behavior that future pet artwork can also use.
+
+## Checks and prototype limits
+
 `dotnet run -- --self-test` runs collision and window-filtering checks and writes `self-test-results.txt` and an artwork preview beside the executable. `dotnet run -- --diagnose` writes `desktop-check.txt` there with monitor counts, space availability, window classes/process names, bounds, transparency, and workspace membership; it does not collect window titles. Run desktop diagnostics normally on your Windows desktop: an isolated execution environment may not see your real windows.
 
 `dotnet run -- --workspace-check` checks a temporary pet window's workspace assignment. When Windows leaves the tool window unassigned to an individual workspace, it reports that fact; it cannot substitute for checking real workspace switches.
 
 The prototype uses a Windows Forms layered window instead of WPF. The artwork supplies per-pixel transparency for smooth edges; fully transparent pixels pass mouse input through to the desktop. The pet has a fixed 76 × 92 physical-pixel footprint, including on mixed-DPI displays; automatic travel across monitor seams is deferred. Window geometry refreshes every 80 ms, so a rapidly moving window can briefly overlap the pet before correction. Transparent/shaped app windows are treated conservatively as solid rectangles. Auto-hidden taskbars follow Windows' reported work area. Real multi-monitor, fullscreen, and cross-app interaction still need hands-on validation.
+
 
 

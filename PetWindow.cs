@@ -21,6 +21,7 @@ internal sealed class PetWindow : Form
     private double lastDragTime;
     private PointF velocityBeforePress;
     private double airReactionUntil;
+    private PetGaze gaze;
 
     public PetWindow(IPet pet)
     {
@@ -185,6 +186,11 @@ internal sealed class PetWindow : Form
             position = PetMotion.Move(world, position, pet.Size, ref vx, ref vy, dt, airborne, out bool wall);
             if (wall) facing = vx != 0 ? Math.Sign(vx) : -facing;
         }
+        if (!paused)
+        {
+            var eyes = new PointF(position.X + pet.GazeOrigin.X, position.Y + pet.GazeOrigin.Y);
+            gaze = gaze.Approach(PetGaze.Toward(eyes, Cursor.Position, mood), dt);
+        }
         Place();
     }
 
@@ -193,7 +199,7 @@ internal sealed class PetWindow : Form
         double now = clock.Elapsed.TotalSeconds;
         var visibleMood = mood == Mood.Falling && now < airReactionUntil ? Mood.React : mood;
         PetRenderer.Draw(Handle, pet, visibleMood, now, facing,
-            new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)));
+            new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)), gaze);
         Native.SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x13); // Keep topmost without activating or changing bounds.
     }
 

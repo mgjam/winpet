@@ -75,7 +75,7 @@ internal static class PhysicsChecks
         Check(narrow.FindSpace(PointF.Empty, size) == null, "Narrow desktop strip cannot fit the pet");
         var removedMonitor = empty.FindSpace(new(-700, 200), size);
         Check(removedMonitor.HasValue && empty.Fits(removedMonitor.Value, size), "Disconnected monitor relocates pet");
-        using (var preview = new Bitmap(456, 152))
+        using (var preview = new Bitmap(456, 284))
         using (var graphics = Graphics.FromImage(preview))
         {
             using var labelFont = new Font("Segoe UI", 8);
@@ -88,6 +88,15 @@ internal static class PhysicsChecks
                 graphics.TranslateTransform(i * 76, 16);
                 cactus.Paint(graphics, moods[i], 2, 1);
                 graphics.DrawString(moods[i].ToString(), labelFont, Brushes.DarkSlateGray, 12, 103);
+            }
+            PetGaze[] looks = [new(-1, 0, 1), new(0, -1, 1), new(1, 0, 1), new(0, 1, 1), new(0, 0, 1), default];
+            string[] labels = ["Look left", "Look up", "Look right", "Look down", "Near center", "Far away"];
+            for (int i = 0; i < looks.Length; i++)
+            {
+                graphics.ResetTransform();
+                graphics.TranslateTransform(i * 76, 148);
+                cactus.Paint(graphics, Mood.Idle, 2, 1, looks[i]);
+                graphics.DrawString(labels[i], labelFont, Brushes.DarkSlateGray, 7, 103);
             }
             preview.Save(Path.Combine(AppContext.BaseDirectory, "cactus-preview.png"));
         }
