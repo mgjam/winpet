@@ -43,49 +43,22 @@ internal static class PhysicsChecks
         Check(new RoutinePose(0, 8).Amount == 0 && new RoutinePose(1, 8).Amount == 1 &&
             new RoutinePose(6.8, 8).Amount == 1 && new RoutinePose(8, 8).Amount == 0,
             "Activities ease in from idle and finish in idle before the next mood");
-        using (var film = new Bitmap(76 * 120, 92 * 3))
-        using (var fg = Graphics.FromImage(film))
+        bool contained = true;
+        foreach (var activity in new[] { Mood.Read, Mood.Think, Mood.Sing })
+        for (int i = 0; i < 120; i++)
         {
-            Mood[] activities = [Mood.Read, Mood.Think, Mood.Sing];
-            bool contained = true;
-            for (int row = 0; row < activities.Length; row++)
-            for (int frameIndex = 0; frameIndex < 120; frameIndex++)
-            {
-                double t = frameIndex / 12.0;
-                using var frame = PetRenderer.Frame(routinePet, t < 8 ? activities[row] : Mood.Idle,
-                    t + 2, 1, default, t < 8 ? new RoutinePose(t, 8) : null);
-                for (int x = 0; x < 76; x++) contained &= frame.GetPixel(x, 0).A == 0 && frame.GetPixel(x, 91).A == 0;
-                for (int y = 0; y < 92; y++) contained &= frame.GetPixel(0, y).A == 0 && frame.GetPixel(75, y).A == 0;
-                fg.DrawImageUnscaled(frame, frameIndex * 76, row * 92);
-            }
-            Check(contained, "Every entrance, page turn, floating note and exit stays inside the pet footprint");
-            film.Save(Path.Combine(AppContext.BaseDirectory, "routine-film.png"));
+            double t = i / 12.0;
+            using var frame = PetRenderer.Frame(routinePet, t < 8 ? activity : Mood.Idle,
+                t + 2, 1, default, t < 8 ? new RoutinePose(t, 8) : null);
+            for (int x = 0; x < 76; x++) contained &= frame.GetPixel(x, 0).A == 0 && frame.GetPixel(x, 91).A == 0;
+            for (int y = 0; y < 92; y++) contained &= frame.GetPixel(0, y).A == 0 && frame.GetPixel(75, y).A == 0;
         }
-        using (var preview = new Bitmap(456, 140))
-        using (var graphics = Graphics.FromImage(preview))
-        {
-            graphics.Clear(Color.FromArgb(245, 242, 232));
-            using var font = new Font("Segoe UI", 8);
-            Mood[] routines = [Mood.Read, Mood.Read, Mood.Think, Mood.Think, Mood.Sing, Mood.Sing];
-            for (int i = 0; i < routines.Length; i++)
-            {
-                double seconds = i % 2 == 0 ? 2.3 : .6;
-                using var frame = PetRenderer.Frame(routinePet, routines[i], seconds, 1);
-                bool clearBorder = true;
-                for (int x = 0; x < frame.Width; x++) clearBorder &= frame.GetPixel(x, 0).A == 0 && frame.GetPixel(x, frame.Height - 1).A == 0;
-                for (int y = 0; y < frame.Height; y++) clearBorder &= frame.GetPixel(0, y).A == 0 && frame.GetPixel(frame.Width - 1, y).A == 0;
-                Check(clearBorder, $"{routines[i]} frame {i % 2} stays within the collision footprint");
-                graphics.DrawImageUnscaled(frame, i * 76, 8);
-                graphics.DrawString(routines[i].ToString(), font, Brushes.DarkSlateGray, i * 76 + 20, 108);
-            }
-            preview.Save(Path.Combine(AppContext.BaseDirectory, "routines-preview.png"));
-        }
+        Check(contained, "Every entrance, page turn, floating note and exit stays inside the pet footprint");
         using (var transparentFrame = PetRenderer.Frame(new CactusPet(), Mood.Idle, 2, 1))
         {
             Check(transparentFrame.GetPixel(38, 9).A == 0, "No green background above cactus outline");
             Check(transparentFrame.GetPixel(0, 0).A == 0, "Empty pixels remain transparent for click-through");
             Check(transparentFrame.GetPixel(38, 30).A == 255, "Cactus body remains opaque");
-            transparentFrame.Save(Path.Combine(AppContext.BaseDirectory, "clean-edges.png"));
         }
         Check(Native.IsFullyTransparent(true, 0, 2), "Invisible alpha-zero NVIDIA-style overlay is excluded");
         Check(!Native.IsFullyTransparent(true, 255, 2), "Opaque layered app remains an obstacle");
@@ -149,31 +122,6 @@ internal static class PhysicsChecks
         Check(narrow.FindSpace(PointF.Empty, size) == null, "Narrow desktop strip cannot fit the pet");
         var removedMonitor = empty.FindSpace(new(-700, 200), size);
         Check(removedMonitor.HasValue && empty.Fits(removedMonitor.Value, size), "Disconnected monitor relocates pet");
-        using (var preview = new Bitmap(456, 284))
-        using (var graphics = Graphics.FromImage(preview))
-        {
-            using var labelFont = new Font("Segoe UI", 8);
-            graphics.Clear(Color.FromArgb(245, 242, 232));
-            var cactus = new CactusPet();
-            Mood[] moods = [Mood.Idle, Mood.Walk, Mood.Look, Mood.Sleep, Mood.React, Mood.Dragged];
-            for (int i = 0; i < moods.Length; i++)
-            {
-                graphics.ResetTransform();
-                graphics.TranslateTransform(i * 76, 16);
-                cactus.Paint(graphics, PetAnimation.Compose(moods[i], 2, 1));
-                graphics.DrawString(moods[i].ToString(), labelFont, Brushes.DarkSlateGray, 12, 103);
-            }
-            PetGaze[] looks = [new(-1, 0, 1), new(0, -1, 1), new(1, 0, 1), new(0, 1, 1), new(0, 0, 1), default];
-            string[] labels = ["Look left", "Look up", "Look right", "Look down", "Near center", "Far away"];
-            for (int i = 0; i < looks.Length; i++)
-            {
-                graphics.ResetTransform();
-                graphics.TranslateTransform(i * 76, 148);
-                cactus.Paint(graphics, PetAnimation.Compose(Mood.Idle, 2, 1, looks[i]));
-                graphics.DrawString(labels[i], labelFont, Brushes.DarkSlateGray, 7, 103);
-            }
-            preview.Save(Path.Combine(AppContext.BaseDirectory, "cactus-preview.png"));
-        }
         string path = Path.Combine(AppContext.BaseDirectory, "self-test-results.txt");
         File.WriteAllLines(path, results);
         return results.Any(r => r.StartsWith("FAIL")) ? 1 : 0;

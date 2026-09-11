@@ -39,7 +39,7 @@ The composition order is explicit:
 3. Eyelids apply independently of gaze, mouth, and props. Every awake action blinks on the same continuous clock, including sitting and being held. Sleep closes the eyes and ignores cursor attention.
 4. Physical interaction actions suppress activity props and supply their own mouth/blush. Whistling owns only its mouth and notes, leaving eyelids and cursor attention available.
 
-`PetAnimationClock` advances facial animation while held but freezes routine time. Explicit pause and unavailable desktop space freeze both clocks. `RoutinePose` remains local to an activity, so starting or ending it never resets blinking. `AnimationChecks` covers all actions, gaze directions, eyelid phases, transitions, interruptions, and rendered eye changes; `--self-test` also writes `attention-preview.png` for visual review.
+`PetAnimationClock` advances facial animation while held but freezes routine time. Explicit pause and unavailable desktop space freeze both clocks. `RoutinePose` remains local to an activity, so starting or ending it never resets blinking. `AnimationChecks` covers all actions, gaze directions, eyelid phases, transitions, interruptions, and rendered eye changes. `PreviewGenerator` owns the visual catalog and produces the source-controlled PNG/GIF gallery in `previews/` after each build; self-tests no longer generate separate preview sets. See README's visual review workflow for commands and the physical state/activity/extra terminology.
 
 Keep position, velocity, body bounds, facing, and current behavior in a small pet model. A bounded timestep update advances motion independently of rendering. Use gravity and swept or substepped collision checks to avoid tunneling through thin obstacles during drops.
 

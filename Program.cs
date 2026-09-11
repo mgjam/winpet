@@ -6,6 +6,11 @@ internal static class Program
     private static void Main(string[] args)
     {
         ApplicationConfiguration.Initialize();
+        if (args.Length == 2 && args[0] == "--generate-previews")
+        {
+            PreviewGenerator.Generate(Path.GetFullPath(args[1]));
+            return;
+        }
         if (args.Contains("--diagnose"))
         {
             var diagnostics = new List<string>();

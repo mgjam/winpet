@@ -12,4 +12,7 @@
   <ItemGroup>
     <EmbeddedResource Include="assets\winpet.ico" LogicalName="WinPet.AppIcon" />
   </ItemGroup>
+  <Target Name="GeneratePetPreviews" AfterTargets="Build" Condition="'$(DesignTimeBuild)' != 'true' and '$(SkipPetPreviews)' != 'true'">
+    <Exec Command="dotnet &quot;$(TargetPath)&quot; --generate-previews &quot;$(MSBuildProjectDirectory)\previews&quot;" />
+  </Target>
 </Project>

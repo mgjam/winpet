@@ -58,28 +58,13 @@ internal static class AnimationChecks
         check(eased.Attention > 0 && eased.Attention < target.Attention &&
             eased.Approach(default, .016f).Attention < eased.Attention,
             "Cursor arrival and departure ease continuously during activities");
-        RenderPreview(check);
+        CheckRenderedEyes(check);
     }
 
-    private static void RenderPreview(Action<bool, string> check)
+    private static void CheckRenderedEyes(Action<bool, string> check)
     {
         Mood[] rows = [Mood.Think, Mood.Read, Mood.Sing, Mood.Walk, Mood.Sit, Mood.Sleep];
-        PetGaze[] looks = [default, new(-1, 0, 1), new(1, 0, 1), new(0, -1, 1), new(0, 1, 1), new(1, 0, 1)];
-        using var preview = new Bitmap(76 * 6, 112 * rows.Length);
-        using var g = Graphics.FromImage(preview);
-        using var font = new Font("Segoe UI", 8);
-        g.Clear(Color.FromArgb(245, 242, 232));
         var pet = new CactusPet();
-        foreach (var (intent, row) in rows.Select((m, i) => (m, i)))
-        {
-            for (int column = 0; column < looks.Length; column++)
-            {
-                using var frame = PetRenderer.Frame(pet, intent, column == 5 ? 2.8 : 2, 1, looks[column], new(5, 24));
-                g.DrawImageUnscaled(frame, column * 76, row * 112);
-            }
-            g.DrawString($"{intent}: default / left / right / up / down / blink", font, Brushes.DarkSlateGray, 4, row * 112 + 94);
-        }
-        preview.Save(Path.Combine(AppContext.BaseDirectory, "attention-preview.png"));
         // Check the rendered face, not just the resolver: props must not mask eyelids.
         foreach (var intent in rows.Where(m => m != Mood.Sleep))
         {
