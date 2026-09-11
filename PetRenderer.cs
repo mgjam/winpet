@@ -24,7 +24,7 @@ internal static class PetRenderer
         var frame = new Bitmap(pet.Size.Width, pet.Size.Height, PixelFormat.Format32bppPArgb);
         using var graphics = Graphics.FromImage(frame);
         graphics.Clear(Color.Transparent);
-        pet.Paint(graphics, mood, seconds, facing, gaze, routine);
+        pet.Paint(graphics, pet.ComposePose(mood, seconds, facing, gaze, routine));
         return frame;
     }
 

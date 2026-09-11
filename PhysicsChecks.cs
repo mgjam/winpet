@@ -6,6 +6,7 @@ internal static class PhysicsChecks
     {
         var results = new List<string>();
         void Check(bool condition, string name) { results.Add($"{(condition ? "PASS" : "FAIL")} {name}"); }
+        AnimationChecks.Run(Check);
         var routinePet = new CactusPet();
         var random = new Random(42);
         var seen = new HashSet<Mood>();
@@ -159,7 +160,7 @@ internal static class PhysicsChecks
             {
                 graphics.ResetTransform();
                 graphics.TranslateTransform(i * 76, 16);
-                cactus.Paint(graphics, moods[i], 2, 1);
+                cactus.Paint(graphics, PetAnimation.Compose(moods[i], 2, 1));
                 graphics.DrawString(moods[i].ToString(), labelFont, Brushes.DarkSlateGray, 12, 103);
             }
             PetGaze[] looks = [new(-1, 0, 1), new(0, -1, 1), new(1, 0, 1), new(0, 1, 1), new(0, 0, 1), default];
@@ -168,7 +169,7 @@ internal static class PhysicsChecks
             {
                 graphics.ResetTransform();
                 graphics.TranslateTransform(i * 76, 148);
-                cactus.Paint(graphics, Mood.Idle, 2, 1, looks[i]);
+                cactus.Paint(graphics, PetAnimation.Compose(Mood.Idle, 2, 1, looks[i]));
                 graphics.DrawString(labels[i], labelFont, Brushes.DarkSlateGray, 7, 103);
             }
             preview.Save(Path.Combine(AppContext.BaseDirectory, "cactus-preview.png"));

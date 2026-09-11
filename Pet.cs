@@ -4,14 +4,17 @@ namespace WinPet;
 
 internal enum Mood { Idle, Walk, Look, Sit, Sleep, React, Dragged, Falling, Read, Think, Sing }
 
-// New pets supply artwork and dimensions; movement and desktop rules are shared.
+// Pets draw resolved channels. They may customize composition without changing
+// desktop physics, or use the shared blink/attention/interaction priorities.
 internal interface IPet
 {
     string Name { get; }
     Size Size { get; }
     IReadOnlyList<PetRoutine> Routines => PetRoutine.Default;
     PointF GazeOrigin => new(Size.Width / 2f, Size.Height / 2f);
-    void Paint(Graphics graphics, Mood mood, double seconds, int facing, PetGaze gaze = default, RoutinePose? routine = null);
+    PetPose ComposePose(Mood intent, double seconds, int facing, PetGaze gaze, RoutinePose? routine)
+        => PetAnimation.Compose(intent, seconds, facing, gaze, routine);
+    void Paint(Graphics graphics, PetPose pose);
 }
 
 internal sealed class CactusPet : IPet
@@ -29,10 +32,10 @@ internal sealed class CactusPet : IPet
         new(Mood.Sing, 1, 11.7 + TransitionSeconds, 15.6 + TransitionSeconds)
     ]);
 
-    public void Paint(Graphics g, Mood mood, double seconds, int facing, PetGaze gaze = default, RoutinePose? routine = null)
+    public void Paint(Graphics g, PetPose pose)
     {
-        float engagement = routine?.Amount ?? 1;
-        double activitySeconds = routine?.Seconds ?? seconds;
+        float engagement = pose.Activity.Amount;
+        double activitySeconds = pose.Activity.Seconds;
         g.SmoothingMode = SmoothingMode.AntiAlias;
         using var outline = new Pen(Color.FromArgb(36, 70, 53), 2);
         using var green = new SolidBrush(Color.FromArgb(105, 170, 107));
@@ -42,7 +45,7 @@ internal sealed class CactusPet : IPet
         using var dark = new SolidBrush(Color.FromArgb(44, 65, 51));
         using var pink = new SolidBrush(Color.FromArgb(239, 145, 160));
         using var feet = new SolidBrush(Color.FromArgb(91, 75, 57));
-        float stride = mood == Mood.Walk ? (float)Math.Sin(seconds * 12) * 2 : 0;
+        float stride = pose.Stride;
         g.FillEllipse(feet, 27, 84 + Math.Max(0, stride), 10, 5);
         g.FillEllipse(feet, 42, 84 + Math.Max(0, -stride), 10, 5);
         using var body = new GraphicsPath(FillMode.Winding);
@@ -65,12 +68,38 @@ internal sealed class CactusPet : IPet
         g.FillEllipse(pink, 46, 5, 7, 7);
         g.FillEllipse(pink, 43, 9, 7, 7);
         g.FillEllipse(Brushes.Wheat, 44, 8, 4, 4);
-        float usualLook = mood == Mood.Look ? (float)Math.Sin(seconds * 1.4) * 2 : facing * 0.7f;
-        float eyeX = usualLook * (1 - gaze.Attention) + gaze.X * 2.5f * gaze.Attention;
-        float eyeY = gaze.Y * 2 * gaze.Attention;
-        if (mood == Mood.Read) { eyeX += ((float)Math.Sin(activitySeconds * 1.8) * 1.2f - eyeX) * engagement; eyeY += (2 - eyeY) * engagement; }
-        if (mood == Mood.Think) { eyeX += (1.5f - eyeX) * engagement; eyeY += (-1.5f - eyeY) * engagement; }
-        bool closed = mood == Mood.Sleep || (mood == Mood.Sit && gaze.Attention < 0.1f) || seconds % 6.3 < 0.16;
+        PaintFace(g, pose.Face, activitySeconds, outline, dark, pink);
+        PointF[] potShape = [new(24, 69), new(53, 69), new(48, 86), new(29, 86)];
+        g.FillPolygon(pot, potShape); g.DrawPolygon(outline, potShape);
+        g.FillRectangle(rim, 21, 63, 35, 7); g.DrawRectangle(outline, 21, 63, 35, 7);
+        using var detail = new Pen(Color.FromArgb(243, 181, 139), 2);
+        g.DrawLine(detail, 29, 74, 31, 82);
+        if (pose.Reacting) g.DrawArc(detail, 35, 73, 10, 8, 0, 180);
+        if (pose.Activity.Kind != PetActivity.None && engagement > 0)
+        {
+            using var props = new Bitmap(Size.Width, Size.Height);
+            using (var pg = Graphics.FromImage(props))
+            {
+                pg.SmoothingMode = SmoothingMode.AntiAlias;
+                if (pose.Activity.Kind == PetActivity.Read)
+                {
+                    pg.TranslateTransform(38, 72 + 8 * (1 - engagement));
+                    pg.ScaleTransform(.18f + .82f * engagement, .8f + .2f * engagement);
+                    pg.TranslateTransform(-38, -72);
+                }
+                PaintRoutine(pg, pose.Activity.Kind, activitySeconds, outline);
+            }
+            using var attributes = new System.Drawing.Imaging.ImageAttributes();
+            attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = engagement });
+            g.DrawImage(props, new Rectangle(Point.Empty, Size), 0, 0, Size.Width, Size.Height, GraphicsUnit.Pixel, attributes);
+        }
+    }
+
+    private static void PaintFace(Graphics g, FacePose face, double activitySeconds, Pen outline, Brush dark, Brush pink)
+    {
+        var eyes = face.Eyes;
+        float eyeX = eyes.X, eyeY = eyes.Y;
+        bool closed = eyes.Openness < .08f;
         if (closed)
         {
             g.DrawArc(outline, 30, 42, 6, 3, 0, 170);
@@ -78,17 +107,19 @@ internal sealed class CactusPet : IPet
         }
         else
         {
-            g.FillEllipse(dark, 32 + eyeX, 41 + eyeY, 3, mood == Mood.Dragged ? 6 : 4);
-            g.FillEllipse(dark, 43 + eyeX, 41 + eyeY, 3, mood == Mood.Dragged ? 6 : 4);
+            float height = eyes.Height * eyes.Openness;
+            float lidOffset = (eyes.Height - height) / 2;
+            g.FillEllipse(dark, 32 + eyeX, 41 + eyeY + lidOffset, 3, height);
+            g.FillEllipse(dark, 43 + eyeX, 41 + eyeY + lidOffset, 3, height);
         }
-        if (mood is Mood.React or Mood.Dragged) {
+        if (face.Blush) {
             g.FillEllipse(pink, 28, 47, 6, 3); g.FillEllipse(pink, 46, 47, 5, 3);
         }
-        if (mood is Mood.Falling or Mood.Dragged) g.DrawEllipse(outline, 37, 48, 4, 5);
-        else if (mood == Mood.Sing)
+        if (face.Mouth == MouthShape.Surprised) g.DrawEllipse(outline, 37, 48, 4, 5);
+        else if (face.Mouth == MouthShape.Whistle)
         {
             // The smile puckers into rounded whistling lips, with a gentle breath pulse.
-            float p = engagement;
+            float p = face.MouthAmount;
             float breath = (float)Math.Sin(activitySeconds * 4) * .5f * p;
             using var lips = new Pen(outline.Color, 1.7f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
             g.DrawBezier(lips, new PointF(36 + p, 48 - p),
@@ -100,35 +131,11 @@ internal sealed class CactusPet : IPet
             using var smile = new Pen(outline.Color, 1.7f) { StartCap = LineCap.Round, EndCap = LineCap.Round };
             g.DrawBezier(smile, 36, 48, 37, 52, 41, 52, 42, 48);
         }
-        PointF[] potShape = [new(24, 69), new(53, 69), new(48, 86), new(29, 86)];
-        g.FillPolygon(pot, potShape); g.DrawPolygon(outline, potShape);
-        g.FillRectangle(rim, 21, 63, 35, 7); g.DrawRectangle(outline, 21, 63, 35, 7);
-        using var detail = new Pen(Color.FromArgb(243, 181, 139), 2);
-        g.DrawLine(detail, 29, 74, 31, 82);
-        if (mood == Mood.React) g.DrawArc(detail, 35, 73, 10, 8, 0, 180);
-        if (RoutinePose.IsActivity(mood) && engagement > 0)
-        {
-            using var props = new Bitmap(Size.Width, Size.Height);
-            using (var pg = Graphics.FromImage(props))
-            {
-                pg.SmoothingMode = SmoothingMode.AntiAlias;
-                if (mood == Mood.Read)
-                {
-                    pg.TranslateTransform(38, 72 + 8 * (1 - engagement));
-                    pg.ScaleTransform(.18f + .82f * engagement, .8f + .2f * engagement);
-                    pg.TranslateTransform(-38, -72);
-                }
-                PaintRoutine(pg, mood, activitySeconds, outline);
-            }
-            using var attributes = new System.Drawing.Imaging.ImageAttributes();
-            attributes.SetColorMatrix(new System.Drawing.Imaging.ColorMatrix { Matrix33 = engagement });
-            g.DrawImage(props, new Rectangle(Point.Empty, Size), 0, 0, Size.Width, Size.Height, GraphicsUnit.Pixel, attributes);
-        }
     }
 
-    private static void PaintRoutine(Graphics g, Mood mood, double seconds, Pen outline)
+    private static void PaintRoutine(Graphics g, PetActivity activity, double seconds, Pen outline)
     {
-        if (mood == Mood.Read)
+        if (activity == PetActivity.Read)
         {
             using var cover = new SolidBrush(Color.FromArgb(79, 132, 126));
             using var paper = new SolidBrush(Color.FromArgb(255, 239, 199));
@@ -180,7 +187,7 @@ internal sealed class CactusPet : IPet
             g.FillEllipse(hand, 18, 65, 6, 8); g.DrawArc(edge, 18, 65, 6, 8, 85, 240);
             g.FillEllipse(hand, 52, 65, 6, 8); g.DrawArc(edge, 52, 65, 6, 8, -145, 240);
         }
-        else if (mood == Mood.Think)
+        else if (activity == PetActivity.Think)
         {
             g.FillEllipse(Brushes.Ivory, 53, 3, 19, 15);
             g.DrawEllipse(outline, 53, 3, 19, 15);
@@ -190,7 +197,7 @@ internal sealed class CactusPet : IPet
             float dotsLeft = 62.5f - ((dots - 1) * 5 + 2) / 2f;
             for (int i = 0; i < dots; i++) g.FillEllipse(Brushes.DarkSlateGray, dotsLeft + i * 5, 9.5f, 2, 2);
         }
-        else if (mood == Mood.Sing)
+        else if (activity == PetActivity.Sing)
         {
             for (int i = 0; i < 3; i++)
             {

@@ -28,6 +28,19 @@ Refresh geometry at a modest interval; add window-event hooks only if polling pr
 
 ## Motion and behavior
 
+### Implemented animation composition
+
+The scheduler's `Mood` names describe exclusive actions (walking, reading, falling), not exclusive facial animations. `PetAnimation.Compose` resolves an action into a `PetPose` with independent body stride, eyes, mouth, blush, and activity prop channels. `CactusPet.Paint` draws this pose; it does not decide whether reading should override a blink or the cursor. `IPet.ComposePose` defaults to the shared composer and can be customized by future pets.
+
+The composition order is explicit:
+
+1. Body/action intent supplies a default gaze and activity style. Reading looks down; thinking looks upward. Routine entrance/exit amounts blend these defaults toward idle.
+2. Smoothed cursor attention blends over that default gaze. Thinking and whistling allow full attention; reading retains a 15% book bias at full attention. Cursor departure returns smoothly to the activity gaze.
+3. Eyelids apply independently of gaze, mouth, and props. Every awake action blinks on the same continuous clock, including sitting and being held. Sleep closes the eyes and ignores cursor attention.
+4. Physical interaction actions suppress activity props and supply their own mouth/blush. Whistling owns only its mouth and notes, leaving eyelids and cursor attention available.
+
+`PetAnimationClock` advances facial animation while held but freezes routine time. Explicit pause and unavailable desktop space freeze both clocks. `RoutinePose` remains local to an activity, so starting or ending it never resets blinking. `AnimationChecks` covers all actions, gaze directions, eyelid phases, transitions, interruptions, and rendered eye changes; `--self-test` also writes `attention-preview.png` for visual review.
+
 Keep position, velocity, body bounds, facing, and current behavior in a small pet model. A bounded timestep update advances motion independently of rendering. Use gravity and swept or substepped collision checks to avoid tunneling through thin obstacles during drops.
 
 Resolve against the pet's full body, not just its center: stop horizontal motion at sides, cancel downward velocity on landing, and block motion into window undersides. Monitor work-area bottoms are ground. Removing support resumes falling. Keep animation separate from collision bounds to avoid jitter.
