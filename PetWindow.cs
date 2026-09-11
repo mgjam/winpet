@@ -22,7 +22,6 @@ internal sealed class PetWindow : Form
     private PointF grabOffset;
     private double lastDragTime;
     private PointF velocityBeforePress;
-    private double airReactionUntil;
     private PetGaze gaze;
 
     public PetWindow(IPet pet)
@@ -205,11 +204,9 @@ internal sealed class PetWindow : Form
 
     private void Place()
     {
-        double now = clock.Elapsed.TotalSeconds;
-        var visibleMood = mood == Mood.Falling && now < airReactionUntil ? Mood.React : mood;
-        PetRenderer.Draw(Handle, pet, visibleMood, animation.Seconds, facing,
+        PetRenderer.Draw(Handle, pet, mood, animation.Seconds, facing,
             new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)), gaze,
-            RoutinePose.IsActivity(visibleMood) ? new RoutinePose(animation.RoutineSeconds - routineStarted, routineDuration) : null);
+            RoutinePose.IsActivity(mood) ? new RoutinePose(animation.RoutineSeconds - routineStarted, routineDuration) : null);
         Native.SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x13); // Keep topmost without activating or changing bounds.
     }
 
@@ -241,7 +238,6 @@ internal sealed class PetWindow : Form
             var bumped = PetMotion.Bump(velocityBeforePress);
             vx = bumped.X; vy = bumped.Y;
             mood = Mood.Falling;
-            airReactionUntil = clock.Elapsed.TotalSeconds + 0.4;
         }
         else { mood = Mood.React; nextBehavior = animation.RoutineSeconds + 1.8; vx = vy = 0; }
         dragging = false;
