@@ -7,7 +7,9 @@ A quiet Windows companion for moments between work, especially outside VS Code. 
 
 ## Status
 
-A runnable first prototype with Cacti, a little potted cactus: walking, looking around, resting, sleeping, click reactions, and drag/drop with a modest flick. Other pets can later implement the small `IPet` artwork interface without changing desktop physics. Only Cacti is included; there is no selector yet.
+A runnable first prototype with Cacti, a little potted cactus: walking, looking around, resting, sleeping, reading, thinking, silently singing, click reactions, and drag/drop with a modest flick. Other pets can later implement the small `IPet` artwork interface without changing desktop physics. Only Cacti is included; there is no selector yet.
+
+Cacti occasionally settles into a book with curved pages and a bookmark, ponders with a small thought bubble, or whistles with puckered lips and drifting musical notes (no audio). Activities ease in over one second and out over 1.2 seconds, followed by 2.5 seconds in idle. Clicks, dragging, and falling interrupt immediately. Pause freezes animation and routine timing. A seeded long-run simulation spends about 88% of autonomous time walking, idling, or sleeping, 7% in special activities, and the rest looking around or sitting. Future pets can override `IPet.Routines` with their own weighted activity choices and duration ranges, and use the optional `RoutinePose` in `Paint` for local animation time and eased engagement; the default profile retains the basic walking and resting behaviors.
 
 ## Build and run
 

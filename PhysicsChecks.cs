@@ -6,6 +6,79 @@ internal static class PhysicsChecks
     {
         var results = new List<string>();
         void Check(bool condition, string name) { results.Add($"{(condition ? "PASS" : "FAIL")} {name}"); }
+        var routinePet = new CactusPet();
+        var random = new Random(42);
+        var seen = new HashSet<Mood>();
+        Mood previous = Mood.Idle;
+        bool validRoutines = true;
+        for (int i = 0; i < 1000; i++)
+        {
+            var selected = PetRoutine.Choose(routinePet.Routines, previous, random);
+            validRoutines &= selected.Mood != previous && routinePet.Routines.Any(r =>
+                r.Mood == selected.Mood && selected.Duration >= r.MinSeconds && selected.Duration <= r.MaxSeconds);
+            seen.Add(selected.Mood);
+            previous = selected.Mood;
+        }
+        Check(validRoutines, "Autonomous routines respect pet durations and avoid immediate repeats");
+        Check(new[] { Mood.Read, Mood.Think, Mood.Sing }.All(seen.Contains), "Cacti naturally reaches all three personal routines");
+        Check(PetRoutine.Choose([], Mood.Read, random).Mood == Mood.Idle, "Pets without routines safely idle");
+        Check(PetRoutine.Choose([new(Mood.Look, 1, 2, 3)], Mood.Look, random).Mood == Mood.Look,
+            "A pet can define just one routine");
+        Check(PetRoutine.Choose([new(Mood.Falling, 1, 2, 3)], Mood.Idle, random).Mood == Mood.Idle,
+            "Autonomous profiles cannot select physics or interaction states");
+        double totalTime = 0, coreTime = 0, activityTime = 0;
+        previous = Mood.Idle;
+        for (int i = 0; i < 100000; i++)
+        {
+            var choice = RoutinePose.IsActivity(previous) ? (Mood: Mood.Idle, Duration: 2.5)
+                : PetRoutine.Choose(routinePet.Routines, previous, random);
+            totalTime += choice.Duration;
+            if (choice.Mood is Mood.Walk or Mood.Idle or Mood.Sleep) coreTime += choice.Duration;
+            if (RoutinePose.IsActivity(choice.Mood)) activityTime += choice.Duration;
+            previous = choice.Mood;
+        }
+        Check(coreTime / totalTime > .85 && activityTime / totalTime < .1,
+            $"Ordinary life dominates by time: core {coreTime / totalTime:P1}, activities {activityTime / totalTime:P1}");
+        Check(new RoutinePose(0, 8).Amount == 0 && new RoutinePose(1, 8).Amount == 1 &&
+            new RoutinePose(6.8, 8).Amount == 1 && new RoutinePose(8, 8).Amount == 0,
+            "Activities ease in from idle and finish in idle before the next mood");
+        using (var film = new Bitmap(76 * 120, 92 * 3))
+        using (var fg = Graphics.FromImage(film))
+        {
+            Mood[] activities = [Mood.Read, Mood.Think, Mood.Sing];
+            bool contained = true;
+            for (int row = 0; row < activities.Length; row++)
+            for (int frameIndex = 0; frameIndex < 120; frameIndex++)
+            {
+                double t = frameIndex / 12.0;
+                using var frame = PetRenderer.Frame(routinePet, t < 8 ? activities[row] : Mood.Idle,
+                    t + 2, 1, default, t < 8 ? new RoutinePose(t, 8) : null);
+                for (int x = 0; x < 76; x++) contained &= frame.GetPixel(x, 0).A == 0 && frame.GetPixel(x, 91).A == 0;
+                for (int y = 0; y < 92; y++) contained &= frame.GetPixel(0, y).A == 0 && frame.GetPixel(75, y).A == 0;
+                fg.DrawImageUnscaled(frame, frameIndex * 76, row * 92);
+            }
+            Check(contained, "Every entrance, page turn, floating note and exit stays inside the pet footprint");
+            film.Save(Path.Combine(AppContext.BaseDirectory, "routine-film.png"));
+        }
+        using (var preview = new Bitmap(456, 140))
+        using (var graphics = Graphics.FromImage(preview))
+        {
+            graphics.Clear(Color.FromArgb(245, 242, 232));
+            using var font = new Font("Segoe UI", 8);
+            Mood[] routines = [Mood.Read, Mood.Read, Mood.Think, Mood.Think, Mood.Sing, Mood.Sing];
+            for (int i = 0; i < routines.Length; i++)
+            {
+                double seconds = i % 2 == 0 ? 2.3 : .6;
+                using var frame = PetRenderer.Frame(routinePet, routines[i], seconds, 1);
+                bool clearBorder = true;
+                for (int x = 0; x < frame.Width; x++) clearBorder &= frame.GetPixel(x, 0).A == 0 && frame.GetPixel(x, frame.Height - 1).A == 0;
+                for (int y = 0; y < frame.Height; y++) clearBorder &= frame.GetPixel(0, y).A == 0 && frame.GetPixel(frame.Width - 1, y).A == 0;
+                Check(clearBorder, $"{routines[i]} frame {i % 2} stays within the collision footprint");
+                graphics.DrawImageUnscaled(frame, i * 76, 8);
+                graphics.DrawString(routines[i].ToString(), font, Brushes.DarkSlateGray, i * 76 + 20, 108);
+            }
+            preview.Save(Path.Combine(AppContext.BaseDirectory, "routines-preview.png"));
+        }
         using (var transparentFrame = PetRenderer.Frame(new CactusPet(), Mood.Idle, 2, 1))
         {
             Check(transparentFrame.GetPixel(38, 9).A == 0, "No green background above cactus outline");

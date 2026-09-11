@@ -15,6 +15,8 @@ internal sealed class PetWindow : Form
     private int facing = 1;
     private Mood mood = Mood.Idle;
     private double lastTick, nextWorld, nextBehavior = 2;
+    private double animationSeconds;
+    private double routineStarted, routineDuration;
     private bool paused, available, pressed, dragging;
     private Point pressCursor, lastCursor;
     private PointF grabOffset;
@@ -145,6 +147,7 @@ internal sealed class PetWindow : Form
         double now = clock.Elapsed.TotalSeconds;
         float dt = (float)Math.Clamp(now - lastTick, 0, 0.035);
         lastTick = now;
+        if (!paused && available && !pressed) animationSeconds += dt;
         if (now >= nextWorld) { RefreshWorld(); nextWorld = now + 0.08; }
         if (!available) return;
         if (pressed)
@@ -174,12 +177,18 @@ internal sealed class PetWindow : Form
             else
             {
                 vy = 0;
-                if (mood is Mood.Falling or Mood.Dragged) { mood = Mood.Sit; nextBehavior = now + 1.4; }
-                if (now >= nextBehavior)
+                if (mood is Mood.Falling or Mood.Dragged) { mood = Mood.Sit; nextBehavior = animationSeconds + 1.4; }
+                if (animationSeconds >= nextBehavior)
                 {
-                    mood = Random.Shared.Next(8) switch { < 3 => Mood.Walk, 3 => Mood.Look, 4 => Mood.Sit, 5 => Mood.Sleep, _ => Mood.Idle };
+                    // Put the prop away, then breathe in idle before choosing another activity.
+                    var routine = RoutinePose.IsActivity(mood)
+                        ? (Mood: Mood.Idle, Duration: 2.5)
+                        : PetRoutine.Choose(pet.Routines, mood, Random.Shared);
+                    mood = routine.Mood;
+                    routineStarted = animationSeconds;
+                    routineDuration = routine.Duration;
                     facing = Random.Shared.Next(2) == 0 ? -1 : 1;
-                    nextBehavior = now + (mood == Mood.Sleep ? Random.Shared.Next(12, 25) : Random.Shared.Next(3, 8));
+                    nextBehavior = animationSeconds + routine.Duration;
                 }
                 vx = mood == Mood.Walk ? facing * 25 : 0;
             }
@@ -198,8 +207,9 @@ internal sealed class PetWindow : Form
     {
         double now = clock.Elapsed.TotalSeconds;
         var visibleMood = mood == Mood.Falling && now < airReactionUntil ? Mood.React : mood;
-        PetRenderer.Draw(Handle, pet, visibleMood, now, facing,
-            new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)), gaze);
+        PetRenderer.Draw(Handle, pet, visibleMood, animationSeconds, facing,
+            new Point((int)Math.Floor(position.X), (int)Math.Floor(position.Y)), gaze,
+            RoutinePose.IsActivity(visibleMood) ? new RoutinePose(animationSeconds - routineStarted, routineDuration) : null);
         Native.SetWindowPos(Handle, -1, 0, 0, 0, 0, 0x13); // Keep topmost without activating or changing bounds.
     }
 
@@ -233,7 +243,7 @@ internal sealed class PetWindow : Form
             mood = Mood.Falling;
             airReactionUntil = clock.Elapsed.TotalSeconds + 0.4;
         }
-        else { mood = Mood.React; nextBehavior = clock.Elapsed.TotalSeconds + 1.8; vx = vy = 0; }
+        else { mood = Mood.React; nextBehavior = animationSeconds + 1.8; vx = vy = 0; }
         dragging = false;
         Capture = false;
     }

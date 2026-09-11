@@ -19,18 +19,18 @@ internal static class PetRenderer
     private static extern bool UpdateLayeredWindow(nint window, nint screen, ref Point position,
         ref Size size, nint source, ref Point origin, uint colorKey, ref Blend blend, uint flags);
 
-    public static Bitmap Frame(IPet pet, Mood mood, double seconds, int facing, PetGaze gaze = default)
+    public static Bitmap Frame(IPet pet, Mood mood, double seconds, int facing, PetGaze gaze = default, RoutinePose? routine = null)
     {
         var frame = new Bitmap(pet.Size.Width, pet.Size.Height, PixelFormat.Format32bppPArgb);
         using var graphics = Graphics.FromImage(frame);
         graphics.Clear(Color.Transparent);
-        pet.Paint(graphics, mood, seconds, facing, gaze);
+        pet.Paint(graphics, mood, seconds, facing, gaze, routine);
         return frame;
     }
 
-    public static void Draw(nint window, IPet pet, Mood mood, double seconds, int facing, Point position, PetGaze gaze = default)
+    public static void Draw(nint window, IPet pet, Mood mood, double seconds, int facing, Point position, PetGaze gaze = default, RoutinePose? routine = null)
     {
-        using var frame = Frame(pet, mood, seconds, facing, gaze);
+        using var frame = Frame(pet, mood, seconds, facing, gaze, routine);
         nint screen = GetDC(0);
         nint memory = CreateCompatibleDC(screen);
         nint bitmap = frame.GetHbitmap(Color.FromArgb(0));
