@@ -187,7 +187,8 @@ internal sealed class CactusPet : IPet
             g.FillEllipse(Brushes.Ivory, 55, 19, 4, 4);
             g.FillEllipse(Brushes.Ivory, 53, 25, 3, 3);
             int dots = 1 + (int)(seconds % 3);
-            for (int i = 0; i < dots; i++) g.FillEllipse(Brushes.DarkSlateGray, 58 + i * 5, 8, 2, 2);
+            float dotsLeft = 62.5f - ((dots - 1) * 5 + 2) / 2f;
+            for (int i = 0; i < dots; i++) g.FillEllipse(Brushes.DarkSlateGray, dotsLeft + i * 5, 9.5f, 2, 2);
         }
         else if (mood == Mood.Sing)
         {
