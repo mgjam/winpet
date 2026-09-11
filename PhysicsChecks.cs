@@ -21,7 +21,7 @@ internal static class PhysicsChecks
             previous = selected.Mood;
         }
         Check(validRoutines, "Autonomous routines respect pet durations and avoid immediate repeats");
-        Check(new[] { Mood.Read, Mood.Think, Mood.Sing }.All(seen.Contains), "Cacti naturally reaches all three personal routines");
+        Check(new[] { Mood.Read, Mood.Think, Mood.Sing, Mood.Violin }.All(seen.Contains), "Cacti naturally reaches all personal routines");
         Check(PetRoutine.Choose([], Mood.Read, random).Mood == Mood.Idle, "Pets without routines safely idle");
         Check(PetRoutine.Choose([new(Mood.Look, 1, 2, 3)], Mood.Look, random).Mood == Mood.Look,
             "A pet can define just one routine");
@@ -44,7 +44,7 @@ internal static class PhysicsChecks
             new RoutinePose(6.8, 8).Amount == 1 && new RoutinePose(8, 8).Amount == 0,
             "Activities ease in from idle and finish in idle before the next mood");
         bool contained = true;
-        foreach (var activity in new[] { Mood.Read, Mood.Think, Mood.Sing })
+        foreach (var activity in new[] { Mood.Read, Mood.Think, Mood.Sing, Mood.Violin })
         for (int i = 0; i < 120; i++)
         {
             double t = i / 12.0;

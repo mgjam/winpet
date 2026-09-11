@@ -22,6 +22,7 @@ internal static class PreviewGenerator
         new("reading", "Activities", "Reading", "Open the book, read and turn pages, then put it away. Review clip uses a shortened hold.", Mood.Read, false, true),
         new("thinking", "Activities", "Thinking", "Thought bubble with centered dots; blink continues. Review clip uses a shortened hold.", Mood.Think, false, true),
         new("singing", "Activities", "Singing / whistling", "Puckered lips and silent notes. Review clip uses a shortened hold.", Mood.Sing, false, true),
+        new("violin", "Activities", "Playing violin", "Warm wooden violin and back-and-forth bowing (silent). Settled playing lasts 18–25 seconds; this review shortens the hold.", Mood.Violin, false, true),
         new("poked", "Activities", "Being poked", "Grounded click reaction: blush and smile.", Mood.React),
         new("looking", "Activities", "Looking around", "Autonomous side-to-side gaze.", Mood.Look),
         new("sitting", "Activities", "Sitting", "Resting awake; eyelids still blink.", Mood.Sit),
@@ -29,7 +30,8 @@ internal static class PreviewGenerator
         new("cursor-tracking", "Shared extras", "Cursor tracking", "Marker moves left, up, right, down, then away; eyes ease back to their default.", Mood.Idle, true),
         new("thinking-attention", "Combinations", "Thinking + attention + blink", "Bubble, cursor gaze and eyelids coexist.", Mood.Think, true),
         new("reading-attention", "Combinations", "Reading + attention + blink", "Glances toward cursor with a slight bookward bias.", Mood.Read, true),
-        new("singing-attention", "Combinations", "Whistling + attention + blink", "Mouth and notes continue while eyes track and blink.", Mood.Sing, true)
+        new("singing-attention", "Combinations", "Whistling + attention + blink", "Mouth and notes continue while eyes track and blink.", Mood.Sing, true),
+        new("violin-attention", "Combinations", "Violin + attention + blink", "Bowing continues while eyes follow the cursor and blink.", Mood.Violin, true)
     ];
 
     private const int Fps = 20;
@@ -110,7 +112,7 @@ internal static class PreviewGenerator
             <title>Cacti visual reference</title>
             <style>body{font:16px system-ui;margin:32px auto;padding:0 24px;max-width:1100px;color:#244635;background:#faf8f1}h1{margin-bottom:8px}p{line-height:1.6}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(245px,1fr));gap:20px}article{background:#f5f2e8;border:1px solid #d9dfd0;border-radius:12px;padding:16px}img{display:block;margin:auto;max-width:100%}h3{margin:12px 0 4px}article p{font-size:14px}a{color:#356e69}button{font:inherit;padding:8px 14px;margin-right:8px;cursor:pointer}nav{position:sticky;top:0;background:#faf8f1;padding:12px 0}</style>
             <h1>Cacti visual reference</h1><p>Generated from the production renderer during <code>dotnet build</code>. PNGs are native 76 × 92 pixels; animations show 2× artwork at real-time speed, 20 fps. The ring indicates cursor direction.</p>
-            <p>Physical state takes priority over activities. Blinking and cursor attention are independent extras. Clips hold the pet in place to review artwork; they do not simulate desktop collisions. Reading/thinking/singing transition clips shorten the settled hold to fit an 8-second loop; production durations are unchanged.</p>
+            <p>Physical state takes priority over activities. Blinking and cursor attention are independent extras. Clips hold the pet in place to review artwork; they do not simulate desktop collisions. Activity transition clips shorten the settled hold to fit an 8-second loop; production durations are unchanged.</p>
             <nav><button onclick="setAnimated(true)">Play animations</button><button onclick="setAnimated(false)">Show stills</button><a href="overview.png">Overview sheet</a></nav>
             """);
         var md = new StringBuilder("# Cacti visual reference\n\nGenerated automatically by `dotnet build`, or `tools\\generate-previews.cmd`. Open [the gallery](index.html) for animated cards and still/animation controls. These files belong in source control; regenerate and review them with artwork changes. Do not edit them manually.\n\nPNGs: native 76 × 92, transparent. GIFs: 2× artwork on cream, 20 fps, eight-second loops. The ring represents cursor direction. Previews show artwork in place, not a desktop physics simulation. Activity transition clips use a shortened hold; production durations are unchanged.\n\n![Overview](overview.png)\n");

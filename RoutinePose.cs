@@ -13,5 +13,5 @@ internal readonly record struct RoutinePose(double Seconds, double Duration)
             return (float)(t * t * (3 - 2 * t));
         }
     }
-    public static bool IsActivity(Mood mood) => mood is Mood.Read or Mood.Think or Mood.Sing;
+    public static bool IsActivity(Mood mood) => mood is Mood.Read or Mood.Think or Mood.Sing or Mood.Violin;
 }

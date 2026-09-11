@@ -1,6 +1,6 @@
 namespace WinPet;
 
-internal enum PetActivity { None, Read, Think, Sing }
+internal enum PetActivity { None, Read, Think, Sing, Violin }
 internal enum MouthShape { Smile, Surprised, Whistle }
 internal readonly record struct EyePose(float X, float Y, float Openness, float Height);
 internal readonly record struct FacePose(EyePose Eyes, MouthShape Mouth, float MouthAmount, bool Blush);
@@ -19,7 +19,8 @@ internal static class PetAnimation
             [PetActivity.None] = new(default, 1, MouthShape.Smile),
             [PetActivity.Read] = new(new(0, 1), .85f, MouthShape.Smile),
             [PetActivity.Think] = new(new(.6f, -.75f), 1, MouthShape.Smile),
-            [PetActivity.Sing] = new(default, 1, MouthShape.Whistle)
+            [PetActivity.Sing] = new(default, 1, MouthShape.Whistle),
+            [PetActivity.Violin] = new(new(.25f, .35f), 1, MouthShape.Smile)
         };
 
     public static PetPose Compose(Mood intent, double seconds, int facing, PetGaze cursor = default, RoutinePose? routine = null)
@@ -27,7 +28,7 @@ internal static class PetAnimation
         var kind = intent switch
         {
             Mood.Read => PetActivity.Read, Mood.Think => PetActivity.Think,
-            Mood.Sing => PetActivity.Sing, _ => PetActivity.None
+            Mood.Sing => PetActivity.Sing, Mood.Violin => PetActivity.Violin, _ => PetActivity.None
         };
         var activity = new ActivityPose(kind, routine?.Seconds ?? seconds,
             kind == PetActivity.None ? 0 : routine?.Amount ?? 1);
