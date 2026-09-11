@@ -62,5 +62,9 @@ internal static class CactusViolin
         g.FillEllipse(green, handX - 3, handY - 2, 7, 6);
         g.DrawArc(edge, handX - 3, handY - 2, 7, 6, -30, 250);
         g.Restore(placement);
+        // One quiet note at a time, rising beside the instrument and clear of the face.
+        float phase = (float)((seconds * .28) % 1);
+        float opacity = Math.Min(1, Math.Min(phase / .16f, (1 - phase) / .25f));
+        CactusMusicNotes.Paint(g, 68 + (float)Math.Sin(phase * Math.PI), 40 - phase * 32, opacity * .85f);
     }
 }
