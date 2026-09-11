@@ -37,7 +37,7 @@ internal static class PhysicsChecks
             if (RoutinePose.IsActivity(choice.Mood)) activityTime += choice.Duration;
             previous = choice.Mood;
         }
-        Check(coreTime / totalTime > .85 && activityTime / totalTime < .1,
+        Check(coreTime / totalTime > .85 && activityTime / totalTime < .15,
             $"Ordinary life dominates by time: core {coreTime / totalTime:P1}, activities {activityTime / totalTime:P1}");
         Check(new RoutinePose(0, 8).Amount == 0 && new RoutinePose(1, 8).Amount == 1 &&
             new RoutinePose(6.8, 8).Amount == 1 && new RoutinePose(8, 8).Amount == 0,
