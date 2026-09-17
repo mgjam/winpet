@@ -19,6 +19,7 @@ internal static class CactusActivityRenderer
                 case PetActivity.Read: CactusReading.Paint(pg, activity.Seconds, activity.Amount); break;
                 case PetActivity.Think: CactusThinking.Paint(pg, activity.Seconds, activity.Amount); break;
                 case PetActivity.Sing: CactusSinging.Paint(pg, activity.Seconds, activity.Amount); break;
+                case PetActivity.Laptop: CactusLaptop.Paint(pg, activity.Seconds, activity.Amount); break;
                 case PetActivity.Violin: CactusViolin.Paint(pg, activity.Seconds, activity.Amount); break;
                 default: throw new ArgumentOutOfRangeException(nameof(activity), activity.Kind, "Missing activity artwork.");
             }

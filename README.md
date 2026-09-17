@@ -8,9 +8,9 @@ A quiet Windows companion for moments between work, especially outside VS Code. 
 
 ## Status
 
-A runnable first prototype with Cacti, a little potted cactus: walking, looking around, resting, sleeping, reading, thinking, silently singing, playing violin, click reactions, and drag/drop with a modest flick. Other pets can later implement the small `IPet` artwork interface without changing desktop physics. Only Cacti is included; there is no selector yet.
+A runnable first prototype with Cacti, a little potted cactus: walking, looking around, resting, sleeping, reading, thinking, silently singing, playing violin, writing on a laptop, click reactions, and drag/drop with a modest flick. Other pets can later implement the small `IPet` artwork interface without changing desktop physics. Only Cacti is included; there is no selector yet.
 
-Cacti occasionally settles into a book with curved pages and a bookmark, ponders with a small thought bubble, or whistles with puckered lips and drifting musical notes (no audio). Settled reading lasts 19.5–28.6 seconds, thinking 18.2–23.4 seconds, and whistling 11.7–15.6 seconds. Activities additionally ease in over one second and out over 1.2 seconds, followed by 2.5 seconds in idle. Clicks, dragging, and falling interrupt immediately. Pause freezes animation and routine timing. A seeded long-run simulation spends about 85% of autonomous time walking, idling, or sleeping, 11% in special activities, and the rest looking around or sitting. Future pets can override `IPet.Routines` with their own weighted activity choices and duration ranges, and draw the resolved `PetPose` channels in `Paint`; `ComposePose` can customize their animation style; the default profile retains the basic walking and resting behaviors.
+Cacti occasionally settles into a book with curved pages and a bookmark, ponders with a small thought bubble, or whistles with puckered lips and drifting musical notes (no audio). Settled reading lasts 19.5–28.6 seconds, thinking 18.2–23.4 seconds, and whistling 11.7–15.6 seconds. Activities additionally ease in over one second and out over 1.2 seconds, followed by 2.5 seconds in idle. Clicks, dragging, and falling interrupt immediately. Pause freezes animation and routine timing. Walking, idling, and sleeping remain the dominant routine choices. Laptop writing lasts 20–28 settled seconds, with the screen facing Cacti, alternating typing taps, and short thinking pauses. Future pets can override `IPet.Routines` with their own weighted activity choices and duration ranges, and draw the resolved `PetPose` channels in `Paint`; `ComposePose` can customize their animation style; the default profile retains the basic walking and resting behaviors.
 
 ## Build and run
 
@@ -35,9 +35,9 @@ The catalog uses these terms:
 | Category | Contents |
 | --- | --- |
 | Physical states | On ground, in air, being held |
-| Activities | Standing, walking, sleeping, reading, thinking, singing/whistling, playing violin, being poked, looking around, sitting |
+| Activities | Standing, walking, sleeping, reading, thinking, singing/whistling, playing violin, writing on a laptop, being poked, looking around, sitting |
 | Shared extras | Blinking and cursor tracking |
-| Combinations | Thinking, reading, whistling, and violin with cursor attention and blinking |
+| Combinations | Thinking, reading, whistling, violin, and laptop writing with cursor attention and blinking |
 
 The current scheduler calls its action enum `Mood`; the gallery calls these **activities**. Physical interaction takes priority over the chosen activity. Eyes and cursor attention remain independent channels. The gallery shows poses in place, not a collision simulation. Its eight-second transition clips shorten the settled activity duration so entrances and exits are easy to review; the actual pet keeps the durations described above.
 
@@ -52,7 +52,7 @@ Cacti follows the active Windows workspace and uses only its visible application
 - `Pet.cs`: shared pet contract and action names.
 - `CactusPet.cs`: Cacti's routine choices and base body artwork.
 - `CactusFace.cs`: draws the resolved eyes, mouth, and blush.
-- `CactusReading.cs`, `CactusThinking.cs`, `CactusSinging.cs`, `CactusViolin.cs`: each activity's artwork and local movement.
+- `CactusReading.cs`, `CactusThinking.cs`, `CactusSinging.cs`, `CactusViolin.cs`, `CactusLaptop.cs`: each activity's artwork and local movement.
 - `CactusActivityRenderer.cs`: dispatches to the activity artist and applies the shared transparent layer/fade.
 - `PetAnimation.cs`: resolves independent animation channels and attention priorities; `PetWindow.cs` handles desktop interaction and movement.
 - `PreviewGenerator.cs`: generates the shared visual gallery from that same rendering path.

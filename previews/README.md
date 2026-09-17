@@ -20,6 +20,7 @@ PNGs: native 76 × 92, transparent. GIFs: 2× artwork on cream, 20 fps, eight-se
 - **Reading** — Open the book, read and turn pages, then put it away. Review clip uses a shortened hold. [PNG](reading.png) · [GIF](reading.gif)
 - **Thinking** — Thought bubble with centered dots; blink continues. Review clip uses a shortened hold. [PNG](thinking.png) · [GIF](thinking.gif)
 - **Singing / whistling** — Puckered lips and silent notes. Review clip uses a shortened hold. [PNG](singing.png) · [GIF](singing.gif)
+- **Writing on laptop** — Alternating typing taps and a short thinking pause. Settled writing lasts 20–28 seconds; this review shortens the hold. [PNG](laptop.png) · [GIF](laptop.gif)
 - **Playing violin** — Warm wooden violin and back-and-forth bowing (silent). Settled playing lasts 18–25 seconds; this review shortens the hold. [PNG](violin.png) · [GIF](violin.gif)
 - **Being poked** — Grounded click reaction: blush and smile. [PNG](poked.png) · [GIF](poked.gif)
 - **Looking around** — Autonomous side-to-side gaze. [PNG](looking.png) · [GIF](looking.gif)
@@ -35,4 +36,5 @@ PNGs: native 76 × 92, transparent. GIFs: 2× artwork on cream, 20 fps, eight-se
 - **Thinking + attention + blink** — Bubble, cursor gaze and eyelids coexist. [PNG](thinking-attention.png) · [GIF](thinking-attention.gif)
 - **Reading + attention + blink** — Glances toward cursor with a slight bookward bias. [PNG](reading-attention.png) · [GIF](reading-attention.gif)
 - **Whistling + attention + blink** — Mouth and notes continue while eyes track and blink. [PNG](singing-attention.png) · [GIF](singing-attention.gif)
+- **Laptop + attention + blink** — Typing continues while eyes follow the cursor and blink. [PNG](laptop-attention.png) · [GIF](laptop-attention.gif)
 - **Violin + attention + blink** — Bowing continues while eyes follow the cursor and blink. [PNG](violin-attention.png) · [GIF](violin-attention.gif)

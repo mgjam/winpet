@@ -1,6 +1,6 @@
 namespace WinPet;
 
-internal enum Mood { Idle, Walk, Look, Sit, Sleep, React, Dragged, Falling, Read, Think, Sing, Violin }
+internal enum Mood { Idle, Walk, Look, Sit, Sleep, React, Dragged, Falling, Read, Think, Sing, Violin, Laptop }
 
 // Pets draw resolved channels. They may customize composition without changing
 // desktop physics, or use the shared blink/attention/interaction priorities.

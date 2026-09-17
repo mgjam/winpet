@@ -26,7 +26,7 @@ internal static class AnimationChecks
         var think = PetAnimation.Compose(Mood.Think, 2, 1, default, routine);
         check(read.Face.Eyes.Y > 1.5f && think.Face.Eyes.Y < -1,
             "Absent cursor leaves reading focused on book and thinking looking upward");
-        foreach (var activity in new[] { Mood.Read, Mood.Think, Mood.Sing, Mood.Violin })
+        foreach (var activity in new[] { Mood.Read, Mood.Think, Mood.Sing, Mood.Violin, Mood.Laptop })
         {
             var up = PetAnimation.Compose(activity, 2, 1, new(0, -1, 1), routine);
             var down = PetAnimation.Compose(activity, 2, 1, new(0, 1, 1), routine);
@@ -63,7 +63,7 @@ internal static class AnimationChecks
 
     private static void CheckRenderedEyes(Action<bool, string> check)
     {
-        Mood[] rows = [Mood.Think, Mood.Read, Mood.Sing, Mood.Violin, Mood.Walk, Mood.Sit, Mood.Sleep];
+        Mood[] rows = [Mood.Think, Mood.Read, Mood.Sing, Mood.Violin, Mood.Laptop, Mood.Walk, Mood.Sit, Mood.Sleep];
         var pet = new CactusPet();
         // Check the rendered face, not just the resolver: props must not mask eyelids.
         foreach (var intent in rows.Where(m => m != Mood.Sleep))

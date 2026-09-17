@@ -22,6 +22,7 @@ internal static class PreviewGenerator
         new("reading", "Activities", "Reading", "Open the book, read and turn pages, then put it away. Review clip uses a shortened hold.", Mood.Read, false, true),
         new("thinking", "Activities", "Thinking", "Thought bubble with centered dots; blink continues. Review clip uses a shortened hold.", Mood.Think, false, true),
         new("singing", "Activities", "Singing / whistling", "Puckered lips and silent notes. Review clip uses a shortened hold.", Mood.Sing, false, true),
+        new("laptop", "Activities", "Writing on laptop", "Alternating typing taps and a short thinking pause. Settled writing lasts 20–28 seconds; this review shortens the hold.", Mood.Laptop, false, true),
         new("violin", "Activities", "Playing violin", "Warm wooden violin and back-and-forth bowing (silent). Settled playing lasts 18–25 seconds; this review shortens the hold.", Mood.Violin, false, true),
         new("poked", "Activities", "Being poked", "Grounded click reaction: blush and smile.", Mood.React),
         new("looking", "Activities", "Looking around", "Autonomous side-to-side gaze.", Mood.Look),
@@ -31,6 +32,7 @@ internal static class PreviewGenerator
         new("thinking-attention", "Combinations", "Thinking + attention + blink", "Bubble, cursor gaze and eyelids coexist.", Mood.Think, true),
         new("reading-attention", "Combinations", "Reading + attention + blink", "Glances toward cursor with a slight bookward bias.", Mood.Read, true),
         new("singing-attention", "Combinations", "Whistling + attention + blink", "Mouth and notes continue while eyes track and blink.", Mood.Sing, true),
+        new("laptop-attention", "Combinations", "Laptop + attention + blink", "Typing continues while eyes follow the cursor and blink.", Mood.Laptop, true),
         new("violin-attention", "Combinations", "Violin + attention + blink", "Bowing continues while eyes follow the cursor and blink.", Mood.Violin, true)
     ];
 

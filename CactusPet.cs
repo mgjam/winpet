@@ -9,13 +9,14 @@ internal sealed class CactusPet : IPet
     public PointF GazeOrigin => new(38, 43);
     private const double TransitionSeconds = RoutinePose.Entrance + RoutinePose.Exit;
     public IReadOnlyList<PetRoutine> Routines { get; } = Array.AsReadOnly<PetRoutine>([
-        new(Mood.Walk, 58, 5, 10), new(Mood.Idle, 44, 6, 12), new(Mood.Sleep, 27, 16, 28),
+        new(Mood.Walk, 70, 5, 10), new(Mood.Idle, 53, 6, 12), new(Mood.Sleep, 33, 16, 28),
         new(Mood.Look, 4, 4, 7), new(Mood.Sit, 3, 4, 8),
         // Give the settled activity its full duration, in addition to opening/putting away.
         new(Mood.Read, 2, 19.5 + TransitionSeconds, 28.6 + TransitionSeconds),
         new(Mood.Think, 2, 18.2 + TransitionSeconds, 23.4 + TransitionSeconds),
         new(Mood.Sing, 1, 11.7 + TransitionSeconds, 15.6 + TransitionSeconds),
-        new(Mood.Violin, 1, 18 + TransitionSeconds, 25 + TransitionSeconds)
+        new(Mood.Violin, 1, 18 + TransitionSeconds, 25 + TransitionSeconds),
+        new(Mood.Laptop, 1, 20 + TransitionSeconds, 28 + TransitionSeconds)
     ]);
 
     public void Paint(Graphics g, PetPose pose)
