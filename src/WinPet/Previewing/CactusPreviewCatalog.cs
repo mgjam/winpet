@@ -19,7 +19,7 @@ internal static class CactusPreviewCatalog
         new("laptop", "Activities", "Writing on laptop", "Alternating typing taps and a short thinking pause. Settled writing lasts 20–28 seconds; this review shortens the hold.", PetIntent.Idle, false, true, Activity: CactusActivities.Laptop),
         new("violin", "Activities", "Playing violin", "Warm wooden violin and back-and-forth bowing (silent). Settled playing lasts 18–25 seconds; this review shortens the hold.", PetIntent.Idle, false, true, Activity: CactusActivities.Violin),
         new("poked", "Activities", "Being poked", "Grounded click reaction: blush and smile.", PetIntent.React),
-        new("watering", "Activities", "Watering", "Cacti holds a little watering can, tips it into the pot, then puts it away.", PetIntent.Idle, false, true, CactusWatering.Action),
+        new("watering", "Activities", "Watering", "You water Cacti with a little watering can that tips into the pot, then moves away.", PetIntent.Idle, false, true, CactusWatering.Action),
         new("looking", "Activities", "Looking around", "Autonomous side-to-side gaze.", PetIntent.Observe),
         new("sitting", "Activities", "Sitting", "Resting awake; eyelids still blink.", PetIntent.Rest),
         new("blinking", "Shared extras", "Blinking", "Continuous close, brief hold, reopen; independent of activity time.", PetIntent.Idle),

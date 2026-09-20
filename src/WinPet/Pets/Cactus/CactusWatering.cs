@@ -3,14 +3,14 @@ using WinPet.Domain;
 
 namespace WinPet.Pets.Cactus;
 
-// The can sits beside the pot, held below the right branch. All geometry stays
+// The user's can sits beside the pot, below the right branch. All geometry stays
 // inside Cacti's existing bounds and clear of the eyes, mouth, and flower.
 internal static class CactusWatering
 {
     public static PetAction Action { get; } = new("water", "Water",
         new CactusActivity("water", Paint, _ => new(.45f, .65f)), 7);
 
-    private static readonly PointF Grip = new(64, 55);
+    private static readonly PointF Pivot = new(64, 55);
     private static readonly PointF Spout = new(49, 53);
 
     private static void Paint(Graphics g, double seconds, float amount)
@@ -18,10 +18,10 @@ internal static class CactusWatering
         var saved = g.Save();
         try
         {
-            g.TranslateTransform(-2, 2 + 8 * (1 - amount));
-            g.TranslateTransform(Grip.X, Grip.Y);
-            g.ScaleTransform(.84f, .84f);
-            g.TranslateTransform(-Grip.X, -Grip.Y);
+            g.TranslateTransform(-6, 7 + 4 * (1 - amount));
+            g.TranslateTransform(Pivot.X, Pivot.Y);
+            g.ScaleTransform(1.22f, 1.22f);
+            g.TranslateTransform(-Pivot.X, -Pivot.Y);
             float pour = Ease((seconds - 1.1) / .8) * (1 - Ease((seconds - 4.8) / .8));
             float tilt = -14 * pour;
             using var edge = CactusPalette.Outline(1.8f);
@@ -32,9 +32,9 @@ internal static class CactusWatering
             if (pour > .05f) PaintWater(g, seconds, pour, tilt);
 
             var can = g.Save();
-            g.TranslateTransform(Grip.X, Grip.Y);
+            g.TranslateTransform(Pivot.X, Pivot.Y);
             g.RotateTransform(tilt);
-            g.TranslateTransform(-Grip.X, -Grip.Y);
+            g.TranslateTransform(-Pivot.X, -Pivot.Y);
 
             // Open round handle, drawn behind the rounded enamel body.
             using var handle = new GraphicsPath();
@@ -68,10 +68,6 @@ internal static class CactusWatering
             g.DrawPolygon(edge, rose);
             g.DrawLine(light, 48.5f, 52, 50, 50.5f);
             g.Restore(can);
-
-            using var green = new SolidBrush(CactusPalette.Green);
-            g.FillEllipse(green, 60, 49, 7, 8);
-            g.DrawArc(edge, 60, 49, 7, 8, 0, 200);
         }
         finally { g.Restore(saved); }
     }
@@ -80,7 +76,7 @@ internal static class CactusWatering
     {
         // Use the same pivot as the can so water always begins at the moving spout.
         using var transform = new Matrix();
-        transform.RotateAt(tilt, Grip);
+        transform.RotateAt(tilt, Pivot);
         PointF[] points = [Spout];
         transform.TransformPoints(points);
         var origin = points[0];
@@ -90,7 +86,7 @@ internal static class CactusWatering
         {
             float phase = (float)((seconds * 1.7 + i / 3.0) % 1);
             float x = origin.X + (48 - origin.X) * phase + (i - 1) * .8f;
-            float y = origin.Y + (62 - origin.Y) * phase * phase;
+            float y = origin.Y + (59 - origin.Y) * phase * phase;
             using var drop = new GraphicsPath();
             drop.AddBezier(x, y - 1.8f, x - 2, y, x - 1.6f, y + 1.8f, x, y + 1.8f);
             drop.AddBezier(x, y + 1.8f, x + 1.6f, y + 1.8f, x + 2, y, x, y - 1.8f);

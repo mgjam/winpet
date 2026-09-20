@@ -23,7 +23,7 @@ PNGs: native 76 × 92, transparent. GIFs: 2× artwork on cream, 20 fps, eight-se
 - **Writing on laptop** — Alternating typing taps and a short thinking pause. Settled writing lasts 20–28 seconds; this review shortens the hold. [PNG](laptop.png) · [GIF](laptop.gif)
 - **Playing violin** — Warm wooden violin and back-and-forth bowing (silent). Settled playing lasts 18–25 seconds; this review shortens the hold. [PNG](violin.png) · [GIF](violin.gif)
 - **Being poked** — Grounded click reaction: blush and smile. [PNG](poked.png) · [GIF](poked.gif)
-- **Watering** — Cacti holds a little watering can, tips it into the pot, then puts it away. [PNG](watering.png) · [GIF](watering.gif)
+- **Watering** — You water Cacti with a little watering can that tips into the pot, then moves away. [PNG](watering.png) · [GIF](watering.gif)
 - **Looking around** — Autonomous side-to-side gaze. [PNG](looking.png) · [GIF](looking.gif)
 - **Sitting** — Resting awake; eyelids still blink. [PNG](sitting.png) · [GIF](sitting.gif)
 
