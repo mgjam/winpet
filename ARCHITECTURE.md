@@ -1,63 +1,65 @@
-# Windows Desktop Pet — Architecture Proposal
+# Windows Desktop Pet — Architecture
 
-Prototype note: the initial implementation uses .NET 10 and a pet-sized Windows Forms window with per-pixel alpha rendering and no-activation styles. This keeps rendering and input geometry together without a desktop-sized overlay. `IPet` separates cactus artwork from shared motion. The remaining sections describe the original proposal; see README for current limitations.
+The application is a .NET 10 Windows Forms project, with a separate `src/WinPet.Tests` executable project for verification. The design follows [CONTRIBUTING.md](CONTRIBUTING.md): domain models own behavior, desktop adapters own Windows integration, and pet definitions own artwork and activities. No dependency-injection container, service framework, or plugin loader is required.
 
-Workspace handling uses the public [IVirtualDesktopManager API](https://learn.microsoft.com/en-us/windows/win32/api/shobjidl_core/nn-shobjidl_core-ivirtualdesktopmanager) to reject windows on inactive workspaces. Cacti's unowned tool window can remain unassigned to a particular workspace; if Windows does assign it and it becomes inactive, move only that window to the active workspace or recreate its handle when no current app can supply a workspace ID. Never switch the user's workspace. Ignore layered windows whose global alpha is explicitly zero; keep ordinary and partly transparent apps solid.
+## Live pet model
 
-## Starting point
+Source folders and namespaces follow the same boundaries: `WinPet.Domain` for shared models and animation state, `WinPet.Desktop` for Windows integration, `WinPet.Rendering` for bitmap composition, `WinPet.Pets.Cactus` for Cacti's artwork, and `WinPet.Previewing` for gallery tooling. Tests mirror these folders under `WinPet.Tests`, with shared test doubles in `TestDoubles`. Every top-level type has a matching source filename; `IPet` lives in `src/WinPet/Domain/IPet.cs`.
 
-Build a small Windows desktop app in C#/.NET, likely using WPF for rendering and Win32/DWM interop for window geometry and mouse routing. Choose a supported .NET SDK at implementation time. Keep one application project and a few focused components; no framework, service layer, or plugin system is needed.
+`PetSession` is the live pet: position, velocity, facing, pause state, mouse interaction, cursor attention, and animation clocks. It receives immutable `World` snapshots, cursor coordinates, elapsed time, and an injected `Random`. It can be exercised without creating a form, enumerating native windows, reading the real cursor, or sleeping.
 
-This is a prototype proposal, not a fixed specification. Validate overlay behavior, input routing, and window bounds first. Change rendering technology, overlay arrangement, or collision implementation when experiments justify it, while preserving the behavior in [PRODUCT.md](PRODUCT.md).
+The model composes focused domain units:
 
-## Overlay and input
+- `World` owns valid desktop geometry, nearest-space recovery, support, and collision-safe movement. It copies input collections so a snapshot cannot change underneath a simulation.
+- `PetMotion` applies collision responses, side rebounds, and midair bumps.
+- `PetBehavior` owns the timeline for autonomous routines and requested actions: start, completion, rest, and interruption.
+- `PetAnimationClock` separates visual time from routine time. Holding freezes routine time; pause, hidden space, and an open menu freeze both.
+- `CursorAttention` calculates and smooths cursor direction and proximity. `PetFrame` exposes intent, visual time, facing, attention, activity identity, and local activity timing without prescribing anatomy.
 
-Use a borderless transparent overlay, excluded from the taskbar and normal activation. It must not steal keyboard focus. One overlay per monitor is a reasonable starting point; a pet-sized overlay is another option if it makes input isolation more reliable.
+The session is the authority for action eligibility and pause state. A menu reads those facts and requests an action; it cannot mutate behavior timing or velocity itself.
 
-Only the visible pet's interactive shape should receive mouse input. Transparent space must pass clicks, scrolling, and dragging to the desktop or applications below. Prototype selective native hit-testing or window regions, including cross-process behavior; do not assume WPF transparency or `IsHitTestVisible` alone provides desktop-wide click-through.
+## Pet definitions and extension
 
-Capture the mouse for an active pet drag and release capture on drop or cancellation. Resolve requested positions against the world geometry, so dragging over an app does not render the pet inside it. A tray menu provides pause/resume and quit without adding persistent controls.
+`IPet` describes a name, footprint, attention origin, routine choices, and optional menu actions. It has no drawing method or pose composer. `IPetVisual` in `Rendering` extends it with `Paint(Graphics, PetFrame)` for desktop presentation; a simulation-only definition implements just `IPet`. The renderer forwards the neutral frame to the pet without a species or anatomy switch. A pet may be a blob, mouth, disembodied face, car, or any other shape.
 
-## World geometry
+`PetIntent` describes idle, move, observe, rest, dormant, react, dragged, and falling states. Cacti interprets move as walking and dormant as sleeping; a car can drive and turn off its engine. The default routine profile only idles. Each pet opts into other routines. Dormant routines may carry an activity, and cursor attention remains available in every state; how it is expressed is a visual decision.
 
-Enumerate top-level windows with Win32 and obtain visible frame bounds through DWM where available. Exclude the pet's own windows, desktop shell surfaces, minimized windows, and cloaked/hidden windows. Include ordinary application windows and dialogs; document any unusual transparent or shaped-window limitations found during testing.
+`PetActivity` is an identity-bearing behavior definition with no drawing callbacks or facial fields. A pet can associate it with its own artwork or derive a pet-specific definition; Cacti uses `CactusActivity` for a drawing callback, gaze defaults, cursor weight, and mouth style. A `PetRoutine` carries an intent, weight, duration range, and optional activity. Definitions reject invalid weights, durations, and physical-interaction intents at construction. Weighted selection avoids repeating the same intent/activity combination when alternatives exist and falls back to idle for an empty profile.
 
-Start with conservative rectangular solid obstacles. Their union is forbidden space. Window top edges provide support only where the pet's entire body fits outside all obstacles; another window may block a potential platform. DWM frame bounds should help avoid treating invisible resize margins or shadows as solid surfaces.
+`PetAction` carries a stable ID, menu label, finite duration, activity, and optional eligibility predicate. `PetActionContext` supplies interaction facts without Windows handles. Actions are optional; the default list is empty.
 
-Refresh geometry at a modest interval; add window-event hooks only if polling proves inadequate. Track supporting windows and revalidate the pet after changes. If overlap appears, relocate to a nearby valid position without animating through forbidden interiors; hide if no valid position exists. Restore it when space returns.
+Adding a new autonomous activity or menu action requires a pet-owned definition and artist. It does not require changing shared enums, animation switches, or renderer dispatchers. Cacti's reusable activity definitions live in `CactusActivities`, and its watering definition and geometry live in `CactusWatering`. Water is not an autonomous routine.
 
-## Motion and behavior
+A requested action replaces the current routine. Activity completion clears the artwork and rests in idle for 2.5 seconds. A click, drag, or fall interrupts the activity. Landing rests for 1.4 seconds. Time spent paused or unavailable does not consume an activity's duration.
 
-### Implemented animation composition
+The current simulation still deliberately uses rectangular collision bounds, gravity, surface movement, and grounded actions. These are shared desktop-physics rules, not anatomy requirements. Flying, swimming, and custom collision geometry would require a separate motion-policy extension; the visual contract does not claim to implement those mechanics.
 
-The scheduler's `Mood` names describe exclusive actions (walking, reading, falling), not exclusive facial animations. `PetAnimation.Compose` resolves an action into a `PetPose` with independent body stride, eyes, mouth, blush, and activity prop channels. `CactusPet.Paint` draws this pose; it does not decide whether reading should override a blink or the cursor. `IPet.ComposePose` defaults to the shared composer and can be customized by future pets.
+## Desktop adapter and resource ownership
 
-The composition order is explicit:
+`PetWindow` translates Windows mouse/timer events into session operations and renders the resulting `PetFrame`. It owns the timer, tray icon, menu, icon, and form lifetime. It contains no drag physics, throw calculation, routine selection, or cursor-attention rules.
 
-1. Body/action intent supplies a default gaze and activity style. Reading looks down; thinking looks upward. Routine entrance/exit amounts blend these defaults toward idle.
-2. Smoothed cursor attention blends over that default gaze. Thinking and whistling allow full attention; reading retains a 15% book bias at full attention. Cursor departure returns smoothly to the activity gaze.
-3. Eyelids apply independently of gaze, mouth, and props. Every awake action blinks on the same continuous clock, including sitting and being held. Sleep closes the eyes and ignores cursor attention.
-4. Physical interaction actions suppress activity props and supply their own mouth/blush. Whistling owns only its mouth and notes, leaving eyelids and cursor attention available.
+`PetMenu` displays commands, reads eligibility from the session, and raises desktop command requests. `DesktopWorld` reads native window facts and constructs a `World`; `Native` contains platform declarations and constants. `VirtualDesktops` uses the public virtual-desktop API to follow the current workspace without switching the user's workspace.
 
-`PetAnimationClock` advances facial animation while held but freezes routine time. Explicit pause and unavailable desktop space freeze both clocks. `RoutinePose` remains local to an activity, so starting or ending it never resets blinking. `AnimationChecks` covers all actions, gaze directions, eyelid phases, transitions, interruptions, and rendered eye changes. `PreviewGenerator` owns the visual catalog and produces the source-controlled PNG/GIF gallery in `previews/` after each build; self-tests no longer generate separate preview sets. See README's visual review workflow for commands and the physical state/activity/extra terminology.
+The form is a pet-sized, borderless, topmost layered window that avoids activation and taskbar presence. Bitmap alpha supplies native hit testing: transparent pixels pass mouse input through. `PetRenderer` composes bitmaps; `LayeredWindow` presents them and releases acquired GDI handles even if later acquisition or presentation fails. Pet artwork and preview generation do not depend on a window handle.
 
-Keep position, velocity, body bounds, facing, and current behavior in a small pet model. A bounded timestep update advances motion independently of rendering. Use gravity and swept or substepped collision checks to avoid tunneling through thin obstacles during drops.
+Desktop geometry is refreshed every 80 ms. While a context menu holds movement and animation still, geometry polling continues; the popup is excluded from obstacles. Unavailable space hides the pet and cancels a grab. The tray remains usable when the pet is hidden. The adapter refreshes desktop facts before executing a requested action.
 
-Resolve against the pet's full body, not just its center: stop horizontal motion at sides, cancel downward velocity on landing, and block motion into window undersides. Monitor work-area bottoms are ground. Removing support resumes falling. Keep animation separate from collision bounds to avoid jitter.
+## Animation and artwork
 
-A small state machine is sufficient: idle, walk, look around, sit, sleep, react, dragged, and falling. Timers select quiet autonomous behaviors; direct interaction temporarily overrides them. Keep speeds and durations as a few tunable constants. Throw velocity is optional and should be capped if implemented.
+Cacti owns `CactusAnimation`, `CactusPose`, `FacePose`, `EyePose`, `MouthShape`, and `ActivityPose` in `Pets/Cactus`. They are not part of the shared domain or renderer contract. Its composition priorities are:
 
-## Monitors, DPI, and taskbars
+1. Intent and activity supply body stride, default gaze, and expression. Local entrance/exit timing blends activity gaze toward idle.
+2. Smoothed cursor attention blends over the activity's gaze with a pet-defined weight.
+3. Blinking uses the independent facial clock; sleep closes the eyes and ignores attention.
+4. Physical interaction suppresses activity props and supplies its own expression.
 
-Use one consistent world-coordinate system, preferably physical screen pixels, with explicit conversion to WPF units per monitor. Support negative monitor coordinates and mixed DPI. Derive each monitor's usable area from Windows work-area information to keep the pet out of taskbars and reserved desktop strips.
+`PetActivityRenderer` is an optional drawing helper that applies a transparent layer and fade to a supplied paint callback. It knows nothing about activity types or faces. Each artist owns its geometry and local movement. `CactusPalette` holds shared body/prop materials. Domain movement never changes artwork bounds, keeping collision geometry stable.
 
-Treat gaps between monitors as outside the world. Permit crossing an adjoining monitor boundary only where the body fits in valid space; retaining the pet on its current monitor is an acceptable initial simplification. Recompute bounds on display, DPI, or work-area changes and safely reposition after a monitor disconnect. Fullscreen or maximized coverage may leave no room: hide quietly, then recover.
+## Verification and previews
 
-## Implementation and validation
+`SelfChecks` in `WinPet.Tests` runs focused suites and owns reporting and exit status. Each suite reports assertions; an unexpected suite exception is recorded as a failure and does not prevent subsequent suites from running. Tests cover geometry, native-window filtering policy, weighted routines, expression composition, action lifecycle, live-session interactions, and menu bindings. Model tests inject time, geometry, and randomness. Contract tests exercise faceless, mouth-only, eyes-only, face-only, and car implementations through real sessions and bitmap rendering, plus a definition with no painter at all. Menu tests create neither a form nor a tray icon.
 
-Suggested responsibilities: overlay/input, window geometry, pet motion/behavior, and rendering. These can be a few files in one project. Keep native interop together and geometry calculations independent enough to test without a live desktop.
+`CactusPreviewCatalog` supplies scenes to the pet-independent `PreviewGenerator`. The generator supplies the same neutral frame to the bitmap renderer as the live session; Cacti composes its own facial pose inside `Paint`. `PreviewGallery` owns HTML/Markdown output; `GifWriter` owns palette encoding and changed-frame storage. `PreviewChecks` in the test project verifies dimensions, frame timing, looping, and decoded frames via an explicit `--preview-check` command. Every ordinary build regenerates the checked-in gallery.
 
-First prove a placeholder pet can coexist with other apps without intercepting their input. Then add obstacles and gravity, dragging and reactions, and finally simple rituals/animation.
-
-Manually verify click-through and focus behavior across different apps; side collisions and top-edge landing; fast drops; dragging across occupied space; moving/resizing/removing support; maximized/fullscreen coverage; taskbars; and mixed-DPI monitors. Add focused automated tests for geometry and landing where useful. Record prototype limitations rather than growing v1 to solve every shell edge case.
+`WorkspaceChecks` is an explicit Windows integration diagnostic in the test project. The application excludes all test sources and grants the test assembly access to its internals through `InternalsVisibleTo`. Automated model checks cannot replace hands-on validation of native focus, virtual-desktop switching, mixed-DPI monitors, and cross-app input routing. See [README.md](README.md) for commands and current platform limitations.
 
